@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanType {
+  free
+  pro
+  team
+}
+
+enum PlanStatus {
+  active
+  canceled
+  past_due
+  trialing
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  passwordHash       String?   @map("password_hash")
+  name               String?
+  avatarUrl          String?   @map("avatar_url")
+  emailVerified      Boolean   @default(false) @map("email_verified")
+  emailVerifyToken   String?   @map("email_verify_token")
+  resetToken         String?   @map("reset_token")
+  resetTokenExpires  DateTime? @map("reset_token_expires")
+  plan               PlanType  @default(free)
+  role               String    @default("user")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  lastLoginAt        DateTime? @map("last_login_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  subscriptions Subscription[]
+  payments      Payment[]
+  history       TranslationHistory[]
+  dictionary    UserDictionary[]
+  settings      UserSettings?
+  usageLogs     UsageLog[]
+
+  @@map("users")
+}
+
+model Subscription {
+  id                    String     @id @default(uuid())
+  userId                String     @map("user_id")
+  stripeCustomerId      String?    @unique @map("stripe_customer_id")
+  stripeSubscriptionId  String?    @unique @map("stripe_subscription_id")
+  stripePriceId         String?    @map("stripe_price_id")
+  plan                  PlanType   @default(free)
+  status                PlanStatus @default(active)
+  currentPeriodStart    DateTime?  @map("current_period_start")
+  currentPeriodEnd      DateTime?  @map("current_period_end")
+  cancelAtPeriodEnd     Boolean    @default(false) @map("cancel_at_period_end")
+  trialEnd              DateTime?  @map("trial_end")
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stripeCustomerId], name: "userId_stripeCustomerId")
+  @@map("subscriptions")
+}
+
+model Payment {
+  id                  String   @id @default(uuid())
+  userId              String   @map("user_id")
+  stripeInvoiceId     String?  @unique @map("stripe_invoice_id")
+  stripePaymentIntent String?  @map("stripe_payment_intent")
+  amount              Int
+  currency            String   @default("usd")
+  status              String?
+  description         String?
+  receiptUrl          String?  @map("receipt_url")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model TranslationHistory {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  originalText   String   @map("original_text")
+  translatedText String   @map("translated_text")
+  sourceLang     String   @default("en") @map("source_lang")
+  targetLang     String   @default("es") @map("target_lang")
+  platform       String   @default("coursera")
+  courseUrl      String?  @map("course_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("translation_history")
+}
+
+model UserDictionary {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  term        String
+  translation String
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, term])
+  @@map("user_dictionary")
+}
+
+model UserSettings {
+  id          String   @id @default(uuid())
+  userId      String   @unique @map("user_id")
+  voiceSpeed  Float    @default(1.0) @map("voice_speed")
+  voiceVolume Float    @default(1.0) @map("voice_volume")
+  voicePitch  Float    @default(1.0) @map("voice_pitch")
+  voiceName   String?  @map("voice_name")
+  targetLang  String   @default("es") @map("target_lang")
+  showOverlay Boolean  @default(true) @map("show_overlay")
+  translator  String   @default("google")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model UsageLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  platform  String?
+  meta      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("usage_logs")
+}

@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "name": "A3B Coursera Voice Narrator",
+  "version": "3.0.0",
+  "description": "Traduce y narra en voz alta los subtítulos de Coursera en español. Powered by A3B Cloud.",
+  "author": "A3B Cloud",
+
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16":  "icons/icon16.png",
+      "48":  "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+
+  "host_permissions": [
+    "*://*.coursera.org/*",
+    "*://*.youtube.com/*",
+    "*://*.udemy.com/*",
+    "*://*.edx.org/*",
+    "*://*.linkedin.com/*",
+    "https://translate.googleapis.com/*",
+    "https://api.a3bhub.cloud/*",
+    "https://api-free.deepl.com/*"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.coursera.org/*",
+        "*://*.youtube.com/*",
+        "*://*.udemy.com/*",
+        "*://*.edx.org/*",
+        "*://*.linkedin.com/*"
+      ],
+      "js": ["compat.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "coursera-voice@a3bcloud",
+      "strict_min_version": "109.0"
+    },
+    "gecko_android": {
+      "strict_min_version": "113.0"
+    }
+  }
+}

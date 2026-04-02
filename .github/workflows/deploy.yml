@@ -1,0 +1,50 @@
+name: Deploy A3B Platform
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/a3b-platform
+
+            echo "📥 Pulling latest code..."
+            git pull origin main
+
+            echo "🐳 Building and restarting containers..."
+            docker compose build --no-cache backend frontend
+            docker compose up -d --remove-orphans
+
+            echo "🗄️ Running migrations..."
+            docker compose exec -T backend npx prisma migrate deploy
+
+            echo "🧹 Cleaning up..."
+            docker image prune -f
+
+            echo "✅ Deploy completo — $(date)"
+
+      - name: Health Check
+        run: |
+          sleep 10
+          curl -f https://api.${{ secrets.DOMAIN }}/health || exit 1
+          echo "✅ Health check passed"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "❌ Deploy falló en $(date)"
