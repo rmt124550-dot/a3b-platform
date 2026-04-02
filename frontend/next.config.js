@@ -2,15 +2,9 @@
 const nextConfig = {
   output: 'standalone',
   images: {
-    domains: ['a3bhub.cloud'],
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
-      },
-    ]
+    remotePatterns: [
+      { protocol: 'https', hostname: 'a3bhub.cloud' },
+    ],
   },
 }
 

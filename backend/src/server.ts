@@ -12,7 +12,6 @@ import { historyRouter } from './routes/history'
 import { dictionaryRouter } from './routes/dictionary'
 import { billingRouter } from './routes/billing'
 import { adminRouter } from './routes/admin'
-import { webhookRouter } from './routes/webhook'
 import { errorHandler } from './middleware/errorHandler'
 import { notFound } from './middleware/notFound'
 
@@ -27,7 +26,6 @@ app.use(cors({
 }))
 
 // ─── Stripe webhook (raw body ANTES de json) ─
-app.use('/api/billing/webhook', express.raw({ type: 'application/json' }), webhookRouter)
 
 // ─── Middleware ────────────────────────────
 app.use(compression())

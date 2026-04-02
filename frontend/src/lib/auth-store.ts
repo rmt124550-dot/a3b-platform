@@ -37,11 +37,6 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'a3b-auth',
-      partialState: (state) => ({
-        user: state.user,
-        refreshToken: state.refreshToken,
-        // No persiste accessToken — se renueva en cada carga
-      }),
     }
   )
 )

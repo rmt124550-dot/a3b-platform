@@ -77,7 +77,7 @@ async function translateDeepL(text: string, source: string, target: string): Pro
     }),
   })
   if (!res.ok) throw new Error('DeepL failed')
-  const data = await res.json()
+  const data = await res.json() as { translations: Array<{ text: string }> }
   return data.translations[0].text
 }
 
