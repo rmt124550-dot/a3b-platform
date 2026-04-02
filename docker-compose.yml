@@ -32,6 +32,7 @@ services:
 
   backend:
     image: grover1249/a3b-backend:latest
+    pull_policy: always
     container_name: a3b_backend
     restart: unless-stopped
     ports:
@@ -53,6 +54,7 @@ services:
 
   frontend:
     image: grover1249/a3b-frontend:latest
+    pull_policy: always
     container_name: a3b_frontend
     restart: unless-stopped
     ports:
