@@ -1,120 +1,69 @@
-# A3B Platform 🔊
+# 🔊 A3B Platform
 
-Plataforma completa para **A3B Coursera Voice Narrator** — Backend API + Frontend + Pagos + Base de datos.
+**Plataforma completa de A3B Cloud** — Extensión de navegador con backend SaaS, pagos, historial y panel de administración.
+
+[![Deploy](https://img.shields.io/badge/deploy-Dokploy-6366f1?style=flat-square)](https://a3bhub.cloud)
+[![Version](https://img.shields.io/badge/version-3.0.0-6366f1?style=flat-square)](https://github.com/rmt124550-dot/a3b-platform/releases)
+[![License](https://img.shields.io/badge/license-MIT-white?style=flat-square)](./LICENSE)
+
+---
+
+## ¿Qué es A3B Platform?
+
+A3B Platform es el ecosistema completo detrás de **A3B Coursera Voice Narrator** — una extensión de navegador que detecta subtítulos en inglés de plataformas de e-learning, los traduce y los narra en voz alta en tiempo real.
+
+La plataforma incluye extensión de navegador (Chrome, Edge, Firefox, Kiwi, Android), backend API con autenticación y pagos, frontend web con dashboard de usuario y panel admin, y un modelo de negocio con planes Free / PRO / Team.
+
+---
+
+## Documentación
+
+| Doc | Descripción |
+|-----|-------------|
+| [01 — Visión general](./docs/01-vision-general.md) | Qué es, objetivos, stack, compatibilidad |
+| [02 — Arquitectura](./docs/02-arquitectura.md) | Servicios, flujo de datos, estructura de archivos |
+| [03 — Modelo de negocio](./docs/03-modelo-negocio.md) | Planes, precios, Stripe, flujo de pagos |
+| [04 — Frontend](./docs/04-frontend.md) | Páginas, diseño, componentes, auth |
+| [05 — Backend API](./docs/05-backend-api.md) | Endpoints, autenticación, guards de plan |
+| [06 — Extensión](./docs/06-extension.md) | content.js, popup, background, plataformas |
+| [07 — Base de datos](./docs/07-base-de-datos.md) | Schema PostgreSQL, modelos Prisma |
+| [08 — Instalación](./docs/08-instalacion.md) | Setup local, Docker, variables de entorno |
+| [09 — Deploy](./docs/09-deploy.md) | Dokploy, Cloudflare, SSL, CI/CD |
+| [10 — Roadmap](./docs/10-roadmap.md) | Versiones, próximas features, contribuir |
+
+---
 
 ## Stack
 
 | Capa | Tecnología |
-|---|---|
-| Frontend | Next.js 14 + Tailwind CSS |
-| Backend | Node.js + Express + TypeScript |
+|------|-----------|
+| Extensión | Manifest V3 · Web Speech API · MutationObserver |
+| Frontend | Next.js 14 · Tailwind CSS · Zustand · App Router |
+| Backend | Node.js · Express · TypeScript · Prisma ORM |
 | Base de datos | PostgreSQL 16 |
 | Cache | Redis 7 |
-| Pagos | Stripe (Checkout + Webhooks + Portal) |
+| Pagos | Stripe (Checkout · Webhooks · Portal) |
 | Email | Resend |
-| Traducción | Google Translate (Free) / DeepL (PRO) |
+| Traducción | Google Translate (Free) · DeepL API (PRO/Team) |
 | Proxy | Nginx |
-| Deploy | Dokploy / Docker Compose |
+| Deploy | Docker Compose · Dokploy · GitHub Actions |
+| DNS / CDN | Cloudflare |
 
-## Estructura
+---
 
-```
-a3b-platform/
-├── docker-compose.yml        # Orquestación de servicios
-├── .env.example              # Variables de entorno
-├── backend/                  # API Express/TypeScript
-│   ├── src/
-│   │   ├── routes/           # auth, billing, translate, admin...
-│   │   ├── middleware/       # authenticate, validate, errorHandler
-│   │   ├── services/         # email
-│   │   └── utils/            # prisma, redis
-│   └── prisma/schema.prisma  # ORM schema
-├── frontend/                 # Next.js App
-│   └── src/app/              # Pages: /, /pricing, /dashboard, /admin
-├── nginx/nginx.conf          # Reverse proxy + SSL
-└── scripts/
-    ├── init.sql              # Schema PostgreSQL
-    └── deploy.sh             # Script de deploy
-```
-
-## Setup rápido
+## Inicio rápido
 
 ```bash
-# 1. Clonar
-git clone https://github.com/a3bcloud/a3b-platform.git
+git clone https://github.com/rmt124550-dot/a3b-platform.git
 cd a3b-platform
-
-# 2. Variables de entorno
 cp .env.example .env
-# → Editar .env con tus keys reales
-
-# 3. Levantar servicios
 docker compose up -d
-
-# 4. Ejecutar migraciones
-docker compose exec backend npm run db:migrate
-
-# 5. Verificar
-curl http://localhost:4000/health
+docker compose exec backend npx prisma migrate deploy
 ```
 
-## Servicios
+Frontend → http://localhost:3000  
+API → http://localhost:4000/health
 
-| Servicio | Puerto | URL |
-|---|---|---|
-| Frontend | 3000 | https://a3bhub.cloud |
-| Backend API | 4000 | https://api.a3bhub.cloud |
-| PostgreSQL | 5432 | interno |
-| Redis | 6379 | interno |
-
-## API Endpoints
-
-### Auth
-- `POST /api/auth/register` — Registro
-- `POST /api/auth/login` — Login
-- `POST /api/auth/refresh` — Refresh token
-- `POST /api/auth/logout` — Logout
-- `GET  /api/auth/me` — Usuario actual
-
-### Traducción
-- `POST /api/translate` — Traducir texto (Google/DeepL según plan)
-
-### Historial
-- `GET  /api/history` — Obtener historial
-- `POST /api/history` — Guardar traducción
-
-### Diccionario
-- `GET    /api/dictionary` — Listar términos
-- `POST   /api/dictionary` — Agregar término
-- `DELETE /api/dictionary/:id` — Eliminar término
-
-### Billing (Stripe)
-- `POST /api/billing/checkout` — Crear sesión de pago
-- `POST /api/billing/portal` — Portal de gestión
-- `GET  /api/billing/status` — Estado de suscripción
-- `POST /api/billing/webhook` — Webhook Stripe (raw)
-
-### Admin
-- `GET   /api/admin/metrics` — Métricas MRR, usuarios, actividad
-- `GET   /api/admin/users` — Listar usuarios con filtros
-- `PATCH /api/admin/users/:id` — Cambiar plan/rol
-- `DELETE /api/admin/users/:id` — Suspender usuario
-
-## Planes
-
-| Plan | Precio | Features |
-|---|---|---|
-| Free | $0 | Google TTS, EN→ES, Coursera |
-| Pro | $4.99/mes | DeepL, 10 idiomas, historial, diccionario |
-| Team | $19.99/mes | Todo PRO + admin dashboard + API |
-
-## Deploy en Dokploy
-
-1. Conecta tu repositorio en Dokploy
-2. Configura las variables de entorno desde `.env.example`
-3. Dokploy detecta el `docker-compose.yml` automáticamente
-4. Activa el dominio `a3bhub.cloud` en Cloudflare → Dokploy
-
-## Licencia
+---
 
 MIT © 2025 A3B Cloud
