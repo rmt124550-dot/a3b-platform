@@ -34,7 +34,7 @@
 
   body {
     background-color: var(--surface);
-    font-family: var(--font-sans);
+    font-family: 'DM Sans', system-ui, sans-serif;
     color: var(--text-1);
     -webkit-font-smoothing: antialiased;
   }
@@ -123,7 +123,7 @@
     padding: 11px 14px;
     font-size: 14px;
     color: #fff;
-    font-family: var(--font-sans);
+    font-family: 'DM Sans', system-ui, sans-serif;
     outline: none;
     transition: border-color 0.15s;
   }
@@ -166,8 +166,8 @@
 }
 
 @layer utilities {
-  .font-serif { font-family: var(--font-serif); }
-  .font-mono  { font-family: var(--font-mono); }
+  .font-serif { font-family: 'Georgia', serif; }
+  .font-mono  { font-family: 'DM Mono', 'Fira Code', monospace; }
 
   /* Fade in up animation */
   @keyframes fadeUp {
