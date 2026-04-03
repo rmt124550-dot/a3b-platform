@@ -171,23 +171,28 @@ webhookRouter.post('/', async (req, res) => {
         const plan   = session.metadata?.plan as 'pro' | 'team'
         if (!userId || !plan) break
 
-        await prisma.$transaction([
-          prisma.subscription.upsert({
-            where:  { userId },
-            create: {
+        // Upsert manual — SubscriptionWhereUniqueInput no acepta { userId }
+        const existingSub = await prisma.subscription.findFirst({ where: { userId } })
+        if (existingSub) {
+          await prisma.subscription.update({
+            where: { id: existingSub.id },
+            data: {
+              stripeCustomerId:     session.customer as string,
+              stripeSubscriptionId: session.subscription as string,
+              plan: plan as any, status: 'active',
+            },
+          })
+        } else {
+          await prisma.subscription.create({
+            data: {
               userId,
               stripeCustomerId:     session.customer as string,
               stripeSubscriptionId: session.subscription as string,
-              plan, status: 'active',
+              plan: plan as any, status: 'active',
             },
-            update: {
-              stripeCustomerId:     session.customer as string,
-              stripeSubscriptionId: session.subscription as string,
-              plan, status: 'active',
-            },
-          }),
-          prisma.user.update({ where: { id: userId }, data: { plan } }),
-        ])
+          })
+        }
+        await prisma.user.update({ where: { id: userId }, data: { plan: plan as any } })
 
         // Invalidar caché del usuario
         await redis.del(`user_cache:${userId}`)
