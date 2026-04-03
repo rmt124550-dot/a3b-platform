@@ -13,13 +13,20 @@ import {
 export const billingRouter  = Router()
 export const webhookRouter  = Router()
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16' as any,
-})
+// Lazy init — evita crash en startup si la env var no está lista aún
+let _stripe: Stripe | null = null
+function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY
+    if (!key) throw new Error('STRIPE_SECRET_KEY no configurada')
+    _stripe = new Stripe(key, { apiVersion: '2023-10-16' as any })
+  }
+  return _stripe
+}
 
 const PLANS: Record<string, { priceId: string; name: string }> = {
-  pro:  { priceId: process.env.STRIPE_PRICE_PRO_MONTHLY!,  name: 'Pro'  },
-  team: { priceId: process.env.STRIPE_PRICE_TEAM_MONTHLY!, name: 'Team' },
+  pro:  { priceId: process.env.STRIPE_PRICE_PRO_MONTHLY  ?? '', name: 'Pro'  },
+  team: { priceId: process.env.STRIPE_PRICE_TEAM_MONTHLY ?? '', name: 'Team' },
 }
 
 // ─── GET /api/billing/plans ───────────────────────────────────────────────────
@@ -74,6 +81,7 @@ billingRouter.post('/checkout', authenticate, async (req, res, next) => {
       customerId = customer.id
     }
 
+    const stripe = getStripe()
     const session = await stripe.checkout.sessions.create({
       customer:             customerId,
       mode:                 'subscription',
@@ -105,6 +113,7 @@ billingRouter.post('/portal', authenticate, async (req, res, next) => {
       return res.status(404).json({ error: 'No tienes suscripción activa' })
     }
 
+    const stripe = getStripe()
     const session = await stripe.billingPortal.sessions.create({
       customer:   sub.stripeCustomerId,
       return_url: `${process.env.FRONTEND_URL}/dashboard/billing`,
@@ -149,6 +158,7 @@ webhookRouter.post('/', async (req, res) => {
   let event: Stripe.Event
 
   try {
+    const stripe = getStripe()
     event = stripe.webhooks.constructEvent(
       req.body,
       sig,

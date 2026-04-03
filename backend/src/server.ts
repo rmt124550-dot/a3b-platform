@@ -168,6 +168,10 @@ app.use(errorHandler)
 app.listen(PORT, () => {
   logger.info(`🚀 A3B API v1.1.0 running on port ${PORT}`)
   logger.info(`   CORS origins: ${ALLOWED_ORIGINS.join(', ')}`)
+  logger.info(`   Stripe key:  ${process.env.STRIPE_SECRET_KEY ? '✅ configurada' : '❌ FALTA'}`)
+  logger.info(`   Resend key:  ${process.env.RESEND_API_KEY    ? '✅ configurada' : '❌ FALTA'}`)
+  logger.info(`   DB URL:      ${process.env.DATABASE_URL      ? '✅ configurada' : '❌ FALTA'}`)
+  logger.info(`   Redis URL:   ${process.env.REDIS_URL         ? '✅ configurada' : '❌ FALTA'}`)
 })
 
 export default app
