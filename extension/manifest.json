@@ -1,27 +1,23 @@
 {
   "manifest_version": 3,
-  "name": "A3B Narrator — Multi-Platform",
-  "version": "3.1.0",
-  "description": "Traduce y narra subtítulos en Coursera, edX, Udemy, Udacity, DataCamp y más",
+  "name": "A3B Narrator \u2014 Multi-Platform",
+  "version": "3.2.0",
+  "description": "Traduce y narra subt\u00edtulos en Coursera, edX, Udemy, Udacity, DataCamp, Codecademy y m\u00e1s",
   "author": "A3B Cloud",
-
   "icons": {
-    "16":  "icons/icon16.png",
-    "48":  "icons/icon48.png",
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-
   "action": {
     "default_popup": "popup.html",
-    "default_icon":  "icons/icon48.png",
+    "default_icon": "icons/icon48.png",
     "default_title": "A3B Narrator"
   },
-
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-
   "content_scripts": [
     {
       "matches": [
@@ -35,20 +31,22 @@
         "*://*.campus.datacamp.com/*",
         "*://*.linkedin.com/*",
         "*://*.linkedinlearning.com/*",
+        "*://*.codecademy.com/*",
         "*://*.youtube.com/*"
       ],
-      "js": ["compat.js", "content.js"],
+      "js": [
+        "compat.js",
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
-
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
     "tabs"
   ],
-
   "host_permissions": [
     "*://*.coursera.org/*",
     "*://*.edx.org/*",
@@ -62,9 +60,9 @@
     "*://*.linkedinlearning.com/*",
     "*://*.youtube.com/*",
     "*://translate.googleapis.com/*",
+    "*://*.codecademy.com/*",
     "*://api.a3bhub.cloud/*"
   ],
-
   "browser_specific_settings": {
     "gecko": {
       "id": "narrator@a3bcloud.com",

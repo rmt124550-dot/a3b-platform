@@ -112,6 +112,27 @@ const PLATFORMS = {
     ],
   },
 
+
+  codecademy: {
+    hosts:     ['codecademy.com', 'www.codecademy.com'],
+    selectors: [
+      // Brightcove Video Player (hereda de Video.js)
+      '.vjs-text-track-cue',
+      '.vjs-text-track-cue span',
+      '.vjs-text-track-display .vjs-text-track-cue',
+      // Brightcove específico
+      '[class*="bc-player"] .vjs-text-track-cue',
+      '.bc-player .vjs-text-track-cue',
+      // Transcript panel
+      '[class*="Transcript"] p.active',
+      '[class*="transcript"] .active',
+      // Subtítulos VTT
+      '.vjs-subtitles .vjs-text-track-cue',
+      '[class*="caption"]',
+    ],
+    note: 'Brightcove player. Solo aplica en lecciones con video (cursos Pro).',
+  },
+
   linkedin: {
     hosts:     ['linkedin.com', 'linkedinlearning.com'],
     selectors: [
