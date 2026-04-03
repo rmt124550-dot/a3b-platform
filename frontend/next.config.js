@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',          // Export estático — sin servidor Node
+  trailingSlash: true,
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'a3bhub.cloud' },
-    ],
+    unoptimized: true,       // Requerido para static export
   },
 }
 
