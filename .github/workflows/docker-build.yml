@@ -35,6 +35,8 @@ jobs:
             type=gha,scope=amd64-${{ matrix.service }}
             type=registry,ref=grover1249/a3b-${{ matrix.service }}:amd64
           cache-to: type=gha,mode=max,scope=amd64-${{ matrix.service }}
+          no-cache-filters: ""
+          pull: false
 
   build-arm64:
     name: Build arm64 (${{ matrix.service }})
@@ -62,6 +64,7 @@ jobs:
             type=gha,scope=arm64-${{ matrix.service }}
             type=registry,ref=grover1249/a3b-${{ matrix.service }}:arm64
           cache-to: type=gha,mode=max,scope=arm64-${{ matrix.service }}
+          pull: false
 
   merge-manifest:
     name: Merge manifest (${{ matrix.service }})
