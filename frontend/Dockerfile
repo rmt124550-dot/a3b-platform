@@ -11,7 +11,7 @@ ENV NEXT_PUBLIC_API_URL=https://api.a3bhub.cloud
 RUN npm run build
 
 # ─── Stage 2: Nginx para servir archivos estáticos ────────────────────────────
-FROM nginx:1.25-alpine
+FROM public.ecr.aws/nginx/nginx:1.25-alpine
 COPY --from=builder /app/out /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
