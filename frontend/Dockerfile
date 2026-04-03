@@ -1,21 +1,8 @@
-# ─── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
-WORKDIR /app
-RUN apk add --no-cache libc6-compat
-COPY package.json ./
-RUN npm install --frozen-lockfile
-COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NEXT_PUBLIC_API_URL=https://api.a3bhub.cloud
-RUN npm run build
+# ─── Stage 1: Servir archivos estáticos ─────────────────────────────────────
+# Los archivos ya fueron compilados en el runner de GitHub Actions
+FROM nginx:1.25-alpine
 
-# ─── Stage 2: Serve ──────────────────────────────────────────────────────────
-FROM nginx:1.25-alpine AS runner
-
-# Copiar archivos estáticos compilados
-COPY --from=builder /app/out /usr/share/nginx/html
-
-# Copiar configuración nginx personalizada
+COPY out /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
