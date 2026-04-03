@@ -112,6 +112,33 @@ app.use((req, _res, next) => {
 // ─── Rate limiting global ──────────────────────────────────────────────────
 app.use('/api/', globalLimiter)
 
+
+// ─── Stats públicos (landing page) ────────────────────────────────────────
+app.get('/stats', async (_req, res) => {
+  try {
+    const cached = await redis.get('public:stats')
+    if (cached) return res.json(JSON.parse(cached))
+
+    const [users, txCount] = await Promise.all([
+      prisma.user.count(),
+      prisma.translationHistory.count().catch(() => 0),
+    ])
+
+    const stats = {
+      users,
+      translations: txCount,
+      platforms: 8,
+      languages: 10,
+      updatedAt: new Date().toISOString(),
+    }
+
+    await redis.setex('public:stats', 300, JSON.stringify(stats))
+    res.json(stats)
+  } catch {
+    res.json({ users: 0, translations: 0, platforms: 8, languages: 10 })
+  }
+})
+
 // ─── Health check (sin rate limit, sin auth) ──────────────────────────────
 app.get('/health', (_req, res) => {
   res.json({
@@ -141,3 +168,4 @@ app.listen(PORT, () => {
 })
 
 export default app
+
