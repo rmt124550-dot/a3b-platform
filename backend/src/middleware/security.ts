@@ -137,6 +137,8 @@ export function additionalSecurityHeaders(_req: Request, res: Response, next: Ne
 // ─── Validar Content-Type en POST/PUT/PATCH ───────────────────────────────
 
 export function requireJsonContentType(req: Request, res: Response, next: NextFunction) {
+  // OPTIONS (CORS preflight) no lleva Content-Type — siempre pasar
+  if (req.method === 'OPTIONS') return next()
   if (['POST','PUT','PATCH'].includes(req.method)) {
     const ct = req.headers['content-type'] ?? ''
     if (!ct.includes('application/json') && !ct.includes('multipart/form-data')) {
