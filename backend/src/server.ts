@@ -3,6 +3,8 @@ import cors from 'cors'
 import helmet from 'helmet'
 import compression from 'compression'
 
+import { prisma } from './utils/prisma'
+import { redis }  from './utils/redis'
 import { authRouter }       from './routes/auth'
 import { userRouter }       from './routes/user'
 import { translateRouter }  from './routes/translate'
