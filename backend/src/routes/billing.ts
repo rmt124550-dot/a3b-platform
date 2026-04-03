@@ -281,7 +281,12 @@ webhookRouter.post('/', async (req, res) => {
         })
         if (!sub) break
 
-        const newStatus = subscription.status === 'active' ? 'active' : subscription.status
+        const stripeStatusMap: Record<string, 'active'|'canceled'|'past_due'|'trialing'> = {
+          active: 'active', trialing: 'trialing', past_due: 'past_due',
+          canceled: 'canceled', incomplete: 'past_due', incomplete_expired: 'canceled',
+          paused: 'active', unpaid: 'past_due',
+        }
+        const newStatus = stripeStatusMap[subscription.status] ?? 'active'
         await prisma.subscription.update({ where: { id: sub.id }, data: { status: newStatus } })
         await redis.del(`user_cache:${sub.userId}`)
         break
