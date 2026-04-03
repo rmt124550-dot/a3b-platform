@@ -148,7 +148,7 @@ export function requireJsonContentType(req: Request, res: Response, next: NextFu
 
 // ─── Detectar User-Agents sospechosos ────────────────────────────────────────
 
-const BLOCKED_UAS = ['sqlmap', 'nikto', 'nmap', 'masscan', 'zgrab', 'python-requests/2.']
+const BLOCKED_UAS = ['sqlmap', 'nikto', 'nmap', 'masscan', 'zgrab']
 
 export function blockMaliciousAgents(req: Request, res: Response, next: NextFunction) {
   const ua = (req.headers['user-agent'] ?? '').toLowerCase()
