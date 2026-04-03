@@ -10,7 +10,7 @@ import { userRouter }       from './routes/user'
 import { translateRouter }  from './routes/translate'
 import { historyRouter }    from './routes/history'
 import { dictionaryRouter } from './routes/dictionary'
-import { billingRouter }    from './routes/billing'
+import { billingRouter, webhookRouter } from './routes/billing'
 import { adminRouter }      from './routes/admin'
 import { errorHandler }     from './middleware/errorHandler'
 import { notFound }         from './middleware/notFound'
@@ -157,6 +157,7 @@ app.use('/api/user',       userRouter)
 app.use('/api/translate',  translateRouter)
 app.use('/api/history',    historyRouter)
 app.use('/api/dictionary', dictionaryRouter)
+app.use('/api/billing/webhook', webhookRouter)
 app.use('/api/billing',    billingRouter)
 app.use('/api/admin',      adminRouter)
 
