@@ -1,289 +1,388 @@
-// ─── A3B Content Script v3.0 ─────────────
-// Detecta subtítulos → traduce (backend/google) → TTS → guarda historial
+// ─── A3B Content Script v3.1 ─────────────────────────────────────────────────
+// Soporta: Coursera, edX, Udemy, Udacity, DataCamp, LinkedIn Learning, YouTube
+// Detecta subtítulos → traduce → TTS → guarda historial
 
 const API = 'https://api.a3bhub.cloud'
 
-// ─── Estado ───────────────────────────────
-let active = false
-let lastText = ''
-let speaking = false
+// ─── Estado ───────────────────────────────────────────────────────────────────
+let active          = false
+let lastText        = ''
+let speaking        = false
+let translateCache  = {}
 let settings = {
   voiceSpeed: 1, voiceVolume: 1, voicePitch: 1,
   voiceName: null, targetLang: 'es',
   showOverlay: true, translator: 'google',
 }
-let userPlan = 'free'
+let userPlan        = 'free'
 let isAuthenticated = false
-let translateCache = {}
 
-// ─── Selectores por plataforma ────────────
-const SELECTORS = {
-  coursera: [
-    '.rc-SubtitleText', '[class*="SubtitleText"]', '[class*="subtitle-text"]',
-    '[class*="subtitles-display"]', '.rc-VideoSubtitle', '[data-e2e="subtitle-text"]',
-    '.vjs-text-track-cue', '.vjs-text-track-cue span', '.caption-text',
-    '[class*="caption"]', '[class*="transcript-item-body"]',
-    '.rc-TranscriptItem .rc-PhraseText',
-  ],
-  youtube: [
-    '.ytp-caption-segment', '.captions-text', '.caption-window',
-  ],
-  udemy: [
-    '[class*="captions--container"]', '[class*="CaptionDisplayArea"]',
-  ],
-  edx: ['.subtitles-menu li.current', '.subtitles span'],
-  linkedin: ['.captions__caption-text', '[data-test-caption]'],
+// ─── Selectores por plataforma ────────────────────────────────────────────────
+const PLATFORMS = {
+
+  coursera: {
+    hosts:     ['coursera.org'],
+    selectors: [
+      '.rc-SubtitleText',
+      '[class*="SubtitleText"]',
+      '[class*="subtitle-text"]',
+      '[class*="subtitles-display"]',
+      '.rc-VideoSubtitle',
+      '[data-e2e="subtitle-text"]',
+      '.vjs-text-track-cue',
+      '.vjs-text-track-cue span',
+      '.caption-text',
+      '[class*="caption"]',
+      '[class*="transcript-item-body"]',
+      '.rc-TranscriptItem .rc-PhraseText',
+    ],
+  },
+
+  edx: {
+    hosts:     ['edx.org', 'open.edx.org', 'courses.edx.org'],
+    selectors: [
+      // Video.js (edX open source) — selectores estables
+      '.subtitles-menu li.current',
+      '.subtitles .current',
+      '.subtitles span',
+      '.video-caption .subtitles',
+      'div.closed-captions',
+      'span.subtitle-content',
+      '.transcript-list li.current',
+      '.transcript-dialog li.current',
+      // Nuevas versiones edX (MFE)
+      '[class*="Transcript"] p.active',
+      '[data-testid="video-caption"]',
+      '.vjs-text-track-cue',
+      '.vjs-text-track-cue span',
+    ],
+  },
+
+  udemy: {
+    hosts:     ['udemy.com'],
+    selectors: [
+      // Udemy React player — data-purpose es el más estable
+      '[data-purpose="captions-display"]',
+      '[data-purpose="captions-display"] span',
+      '[class*="captions--container"]',
+      '[class*="CaptionDisplayArea"]',
+      '[class*="CaptionDisplay"]',
+      // Fallback Video.js
+      '.vjs-text-track-cue',
+      '.vjs-text-track-cue span',
+      // Udemy Legacy
+      '.js-caption-element',
+      '.vjs-subtitles',
+      'div[data-purpose="video-caption"]',
+    ],
+  },
+
+  udacity: {
+    hosts:     ['udacity.com', 'classroom.udacity.com'],
+    selectors: [
+      // Udacity transcript panel (más confiable que VTT)
+      '.ud-transcript-cue--active',
+      '[class*="transcript"] .active',
+      '[class*="transcript-cue--active"]',
+      '.classroom-video__transcript .active',
+      '.video-transcript .active',
+      // Video.js fallback
+      '.vjs-text-track-cue',
+      '.vjs-text-track-cue span',
+      // Atoms (nano-degrees)
+      '.ud-atom-video__transcript p.active',
+      '[class*="atom-video"] .transcript-active',
+    ],
+  },
+
+  datacamp: {
+    hosts:     ['datacamp.com', 'campus.datacamp.com'],
+    selectors: [
+      // DataCamp player — Video.js customizado
+      '.vjs-text-track-cue',
+      '.vjs-text-track-cue span',
+      '[class*="Subtitles"]',
+      '[class*="subtitles"]',
+      '[data-cy="subtitle-text"]',
+      '.dc-subtitle',
+      '.exercise-area [class*="subtitle"]',
+      // DataCamp transcript panel
+      '[class*="Transcript"] .active',
+      '.transcript__text--active',
+    ],
+  },
+
+  linkedin: {
+    hosts:     ['linkedin.com', 'linkedinlearning.com'],
+    selectors: [
+      '.captions__caption-text',
+      '[data-test-caption]',
+      '.captions-text-container .active',
+      '[class*="caption-text"]',
+      '.video-caption-track span',
+      '.tl-timed-text-caption',
+    ],
+  },
+
+  youtube: {
+    hosts:     ['youtube.com', 'youtu.be'],
+    selectors: [
+      '.ytp-caption-segment',
+      '.captions-text',
+      '.caption-window',
+      '[class*="ytp-caption"]',
+    ],
+  },
+
+  // Generic Video.js — fallback para plataformas desconocidas
+  generic: {
+    hosts:     [],
+    selectors: [
+      '.vjs-text-track-cue',
+      '.vjs-text-track-cue span',
+      '[class*="caption"]',
+      '[class*="subtitle"]',
+      '[class*="transcript"]',
+    ],
+  },
 }
 
-function getSelectors() {
-  const host = location.hostname
-  if (host.includes('coursera'))  return SELECTORS.coursera
-  if (host.includes('youtube'))   return SELECTORS.youtube
-  if (host.includes('udemy'))     return SELECTORS.udemy
-  if (host.includes('edx'))       return SELECTORS.edx
-  if (host.includes('linkedin'))  return SELECTORS.linkedin
-  return SELECTORS.coursera
+// ─── Detectar plataforma actual ───────────────────────────────────────────────
+function detectPlatform() {
+  const host = location.hostname.replace('www.', '')
+  for (const [name, config] of Object.entries(PLATFORMS)) {
+    if (name === 'generic') continue
+    if (config.hosts.some(h => host.includes(h))) {
+      return { name, selectors: config.selectors }
+    }
+  }
+  return { name: 'generic', selectors: PLATFORMS.generic.selectors }
 }
 
-// ─── Traducción ───────────────────────────
+let CURRENT_PLATFORM = detectPlatform()
+console.log(`[A3B] Plataforma detectada: ${CURRENT_PLATFORM.name}`)
+
+// ─── Seleccionar subtítulo activo ─────────────────────────────────────────────
+function getSubtitleText() {
+  for (const selector of CURRENT_PLATFORM.selectors) {
+    try {
+      const el = document.querySelector(selector)
+      if (el) {
+        const text = el.innerText?.trim() || el.textContent?.trim()
+        if (text && text.length > 2) return text
+      }
+    } catch {}
+  }
+  return null
+}
+
+// ─── Traducción ───────────────────────────────────────────────────────────────
 async function translate(text) {
   const key = `${settings.targetLang}:${text}`
   if (translateCache[key]) return translateCache[key]
 
-  let translated
+  let translated = null
 
+  // PRO/Team: backend (DeepL o Google con caché persistente)
   if (isAuthenticated && userPlan !== 'free') {
-    // PRO/Team: backend (DeepL o Google con cache)
     try {
       const data = await sendToBackground('API_CALL', {
         path: '/api/translate',
         options: {
           method: 'POST',
-          body: JSON.stringify({ text, source: 'en', target: settings.targetLang }),
+          body: JSON.stringify({
+            text,
+            from: 'en',
+            to: settings.targetLang,
+          }),
         },
       })
-      if (data?.translated) {
-        translated = data.translated
-      }
+      if (data?.translated) translated = data.translated
     } catch {}
   }
 
+  // Fallback: Google Translate público (plan free)
   if (!translated) {
-    // Fallback: Google Translate público
     try {
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${settings.targetLang}&dt=t&q=${encodeURIComponent(text)}`
-      const res = await fetch(url)
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${settings.targetLang}&dt=t&q=${encodeURIComponent(text)}`
+      const res  = await fetch(url)
       const json = await res.json()
-      translated = json[0].map((d) => d[0]).join('')
+      translated = json[0].map(d => d[0]).join('')
     } catch {
       translated = text
     }
   }
 
   translateCache[key] = translated
-
-  // Guardar en historial si está autenticado y es PRO+
-  if (isAuthenticated && (userPlan === 'pro' || userPlan === 'team')) {
-    saveHistory(text, translated).catch(() => {})
-  }
-
   return translated
 }
 
-// ─── Guardar historial ────────────────────
-async function saveHistory(originalText, translatedText) {
-  const platform = location.hostname.includes('coursera') ? 'coursera'
-    : location.hostname.includes('youtube') ? 'youtube'
-    : location.hostname.includes('udemy') ? 'udemy'
-    : location.hostname.includes('edx') ? 'edx'
-    : location.hostname.includes('linkedin') ? 'linkedin' : 'coursera'
-
-  await sendToBackground('API_CALL', {
-    path: '/api/history',
-    options: {
-      method: 'POST',
-      body: JSON.stringify({
-        originalText, translatedText,
-        sourceLang: 'en', targetLang: settings.targetLang,
-        platform, courseUrl: location.href,
-      }),
-    },
-  })
-}
-
-// ─── TTS ──────────────────────────────────
+// ─── TTS ──────────────────────────────────────────────────────────────────────
 function speak(text) {
   if (!text || speaking) return
+
   speechSynthesis.cancel()
+  speaking = true
 
   const utt = new SpeechSynthesisUtterance(text)
-  utt.lang = settings.targetLang
-  utt.rate = settings.voiceSpeed
+  utt.lang   = settings.targetLang === 'es' ? 'es-ES' : settings.targetLang
+  utt.rate   = settings.voiceSpeed
   utt.volume = settings.voiceVolume
-  utt.pitch = settings.voicePitch
+  utt.pitch  = settings.voicePitch
 
   if (settings.voiceName) {
-    const v = speechSynthesis.getVoices().find(v => v.name === settings.voiceName)
-    if (v) utt.voice = v
+    const voices = speechSynthesis.getVoices()
+    const voice  = voices.find(v => v.name === settings.voiceName)
+    if (voice) utt.voice = voice
   }
 
-  utt.onstart = () => { speaking = true }
-  utt.onend = () => { speaking = false }
+  utt.onend   = () => { speaking = false }
   utt.onerror = () => { speaking = false }
 
   speechSynthesis.speak(utt)
 }
 
-// ─── Overlay en pantalla ──────────────────
+// ─── Overlay en pantalla ──────────────────────────────────────────────────────
 let overlayEl = null
 
-function createOverlay() {
-  if (overlayEl) return
-  overlayEl = document.createElement('div')
-  overlayEl.id = 'a3b-overlay'
-  overlayEl.style.cssText = `
-    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-    max-width: 680px; width: 90%; z-index: 2147483647;
-    background: rgba(10,10,20,0.92); backdrop-filter: blur(12px);
-    border: 1px solid rgba(99,102,241,0.3); border-radius: 14px;
-    padding: 14px 18px; pointer-events: none;
-    font-family: system-ui, sans-serif; transition: opacity 0.3s;
-  `
-  document.body.appendChild(overlayEl)
-}
+function showOverlay(original, translated) {
+  if (!settings.showOverlay) return
 
-function updateOverlay(original, translated) {
-  if (!settings.showOverlay) {
-    if (overlayEl) overlayEl.style.opacity = '0'
-    return
+  if (!overlayEl) {
+    overlayEl = document.createElement('div')
+    overlayEl.id = 'a3b-overlay'
+    overlayEl.style.cssText = `
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.82); color: #fff; padding: 10px 20px;
+      border-radius: 8px; font-size: 15px; max-width: 700px; text-align: center;
+      z-index: 999999; pointer-events: none; backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.12); font-family: system-ui, sans-serif;
+      line-height: 1.5;
+    `
+    document.body.appendChild(overlayEl)
   }
-  createOverlay()
+
   overlayEl.innerHTML = `
-    <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:5px;font-family:monospace;letter-spacing:0.05em;">
-      🔊 A3B Narrator · EN → ${settings.targetLang.toUpperCase()}
-    </div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:6px;line-height:1.4;">${original}</div>
-    <div style="font-size:16px;color:#ffffff;font-weight:600;line-height:1.4;">${translated}</div>
+    <div style="opacity:0.65;font-size:12px;margin-bottom:2px">${original}</div>
+    <div style="font-weight:600">${translated}</div>
+    <span style="position:absolute;top:6px;right:10px;font-size:10px;opacity:0.5">
+      A3B [${CURRENT_PLATFORM.name}]
+    </span>
   `
-  overlayEl.style.opacity = '1'
 }
 
 function hideOverlay() {
-  if (overlayEl) overlayEl.style.opacity = '0'
+  if (overlayEl) overlayEl.innerHTML = ''
 }
 
-// ─── Procesamiento de subtítulo ───────────
+// ─── MutationObserver ─────────────────────────────────────────────────────────
 let debounceTimer = null
 
-async function processSubtitle(text) {
-  text = text.trim()
-  if (!text || text === lastText || text.length < 3) return
-  lastText = text
+function onSubtitleChange() {
+  if (!active) return
 
-  const translated = await translate(text)
-  speak(translated)
-  updateOverlay(text, translated)
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(async () => {
+    const text = getSubtitleText()
+    if (!text || text === lastText) return
+    lastText = text
+
+    const translated = await translate(text)
+    if (!translated) return
+
+    speak(translated)
+    showOverlay(text, translated)
+
+    // Guardar en historial (solo PRO/Team)
+    if (isAuthenticated && userPlan !== 'free') {
+      sendToBackground('API_CALL', {
+        path: '/api/history',
+        options: {
+          method: 'POST',
+          body: JSON.stringify({
+            original:   text,
+            translated,
+            platform:   CURRENT_PLATFORM.name,
+            sourceLang: 'en',
+            targetLang: settings.targetLang,
+            videoUrl:   location.href,
+          }),
+        },
+      }).catch(() => {})
+    }
+  }, 180)
 }
 
-// ─── MutationObserver ─────────────────────
-let observer = null
+const observer = new MutationObserver(onSubtitleChange)
 
 function startObserver() {
-  if (observer) return
-  const selectors = getSelectors()
-
-  observer = new MutationObserver(() => {
-    if (!active) return
-    clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
-      for (const sel of selectors) {
-        const el = document.querySelector(sel)
-        if (el?.textContent?.trim()) {
-          processSubtitle(el.textContent)
-          break
-        }
-      }
-    }, 180)
-  })
-
-  observer.observe(document.body, { childList: true, subtree: true, characterData: true })
-}
-
-function stopObserver() {
-  observer?.disconnect()
-  observer = null
-  speechSynthesis.cancel()
-  hideOverlay()
-  speaking = false
-  lastText = ''
-}
-
-// ─── Helper: mensaje al background ────────
-function sendToBackground(type, payload = {}) {
-  return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type, ...payload }, resolve)
+  observer.observe(document.body, {
+    childList: true, subtree: true, characterData: true,
   })
 }
 
-// ─── Cargar configuración y auth ──────────
-async function loadConfig() {
-  const stored = await chrome.storage.local.get([
-    'active', 'settings', 'user', 'accessToken'
-  ])
-
-  if (stored.settings) settings = { ...settings, ...stored.settings }
-  if (stored.user) {
-    isAuthenticated = true
-    userPlan = stored.user.plan ?? 'free'
-  }
-  if (stored.active) {
-    active = true
-    startObserver()
-  }
+// ─── Comunicación con background ─────────────────────────────────────────────
+function sendToBackground(type, data) {
+  return new Promise((resolve, reject) => {
+    const runtime = typeof browser !== 'undefined' ? browser : chrome
+    runtime.runtime.sendMessage({ type, ...data }, (response) => {
+      if (response?.error) reject(response.error)
+      else resolve(response)
+    })
+  })
 }
 
-// ─── Message handler desde popup ──────────
-chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+// ─── Mensajes desde popup ─────────────────────────────────────────────────────
+const runtime = typeof browser !== 'undefined' ? browser : chrome
+
+runtime.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   switch (msg.type) {
-    case 'TOGGLE':
-      active = msg.value
-      chrome.storage.local.set({ active })
-      if (active) startObserver()
-      else stopObserver()
-      reply({ ok: true })
+
+    case 'ACTIVATE':
+      active   = true
+      settings = { ...settings, ...msg.settings }
+      userPlan        = msg.userPlan || 'free'
+      isAuthenticated = msg.isAuthenticated || false
+      startObserver()
+      sendResponse({ ok: true, platform: CURRENT_PLATFORM.name })
+      break
+
+    case 'DEACTIVATE':
+      active = false
+      speaking = false
+      speechSynthesis.cancel()
+      hideOverlay()
+      sendResponse({ ok: true })
       break
 
     case 'STOP':
-      speechSynthesis.cancel()
-      hideOverlay()
       speaking = false
-      reply({ ok: true })
+      speechSynthesis.cancel()
+      sendResponse({ ok: true })
       break
 
     case 'UPDATE_SETTINGS':
       settings = { ...settings, ...msg.settings }
-      chrome.storage.local.set({ settings })
-      reply({ ok: true })
+      sendResponse({ ok: true })
       break
 
     case 'GET_STATUS':
-      reply({ active, speaking, plan: userPlan, isAuthenticated })
+      sendResponse({
+        active,
+        platform: CURRENT_PLATFORM.name,
+        userPlan,
+        isAuthenticated,
+        lastText,
+      })
       break
 
-    case 'TEST_VOICE':
-      speak(msg.text ?? `Hola, esta es una prueba de A3B Narrator en ${settings.targetLang}`)
-      reply({ ok: true })
-      break
-
-    case 'AUTH_UPDATED':
-      isAuthenticated = !!msg.user
-      userPlan = msg.user?.plan ?? 'free'
-      reply({ ok: true })
+    case 'TEST_SUBTITLE':
+      const text = getSubtitleText()
+      sendResponse({ found: !!text, text: text || null, platform: CURRENT_PLATFORM.name })
       break
   }
   return true
 })
 
-// ─── Init ─────────────────────────────────
-loadConfig()
-console.log('🔊 A3B Content Script v3.0 loaded')
+// ─── Init ─────────────────────────────────────────────────────────────────────
+console.log(`[A3B v3.1] Cargado en ${CURRENT_PLATFORM.name} | ${location.hostname}`)

@@ -2,371 +2,373 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>A3B Narrator</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:       #0d0d14;
-      --bg1:      #13131f;
-      --bg2:      #191926;
-      --border:   rgba(255,255,255,0.08);
-      --indigo:   #6366f1;
-      --indigo2:  #4f51c4;
-      --emerald:  #34d399;
-      --rose:     #f87171;
-      --text:     #ffffff;
-      --text2:    rgba(255,255,255,0.55);
-      --text3:    rgba(255,255,255,0.25);
-    }
-
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      width: 340px; min-height: 420px;
-      background: var(--bg); color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
-      font-size: 13px; overflow: hidden;
+      width: 340px; min-height: 480px;
+      font-family: -apple-system, system-ui, sans-serif;
+      background: #0f1117; color: #e8e8f0; font-size: 13px;
     }
-
-    /* ── Header ── */
     .header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px 12px;
-      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg,#1a1b2e,#16213e);
+      padding: 14px 16px; display:flex; align-items:center; gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
-    .logo { display: flex; align-items: center; gap: 7px; font-weight: 700; font-size: 14px; }
-    .logo span { font-size: 20px; }
-    .logo em { color: var(--indigo); font-style: normal; }
+    .logo { font-size:22px; }
+    .title { font-size:15px; font-weight:700; letter-spacing:0.3px; }
+    .title span { color:#6c63ff; }
+    .badge-platform {
+      margin-left:auto; font-size:10px; padding:2px 8px;
+      border-radius:12px; background:rgba(108,99,255,0.2);
+      color:#9d96ff; border:1px solid rgba(108,99,255,0.3);
+      font-weight:600; text-transform:uppercase; letter-spacing:0.5px;
+    }
 
-    .plan-badge {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
-      text-transform: uppercase; padding: 2px 7px; border-radius: 5px;
-    }
-    .plan-free   { background: rgba(255,255,255,0.06); color: var(--text3); }
-    .plan-pro    { background: rgba(99,102,241,0.2);   color: #a5b4fc; }
-    .plan-team   { background: rgba(139,92,246,0.2);   color: #c4b5fd; }
-
-    /* ── Tabs ── */
-    .tabs {
-      display: flex; border-bottom: 1px solid var(--border);
-      padding: 0 16px; gap: 0;
-    }
+    /* Tabs */
+    .tabs { display:flex; background:#0c0d14; border-bottom:1px solid rgba(255,255,255,0.06); }
     .tab {
-      padding: 10px 12px; font-size: 12px; font-weight: 500;
-      color: var(--text3); cursor: pointer; border: none;
-      background: none; border-bottom: 2px solid transparent;
-      transition: color 0.15s, border-color 0.15s;
+      flex:1; padding:10px 0; text-align:center; cursor:pointer;
+      font-size:11px; color:rgba(255,255,255,0.4); font-weight:500;
+      transition:all .2s; border-bottom:2px solid transparent;
     }
-    .tab.active { color: var(--indigo); border-bottom-color: var(--indigo); }
-    .tab:hover:not(.active) { color: var(--text2); }
+    .tab.active { color:#6c63ff; border-bottom-color:#6c63ff; }
+    .tab-content { display:none; padding:14px; }
+    .tab-content.active { display:block; }
 
-    /* ── Content ── */
-    .pane { display: none; padding: 16px; }
-    .pane.active { display: block; }
+    /* Platform selector */
+    .platform-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 6px; margin-bottom: 14px;
+    }
+    .platform-badge {
+      padding: 6px 4px; border-radius:6px; text-align:center; cursor:pointer;
+      border: 1px solid rgba(255,255,255,0.08); font-size:9px; font-weight:600;
+      color:rgba(255,255,255,0.4); background: rgba(255,255,255,0.03);
+      transition:all .15s; text-transform:uppercase;
+    }
+    .platform-badge.detected {
+      border-color: rgba(108,99,255,0.5); color:#9d96ff;
+      background: rgba(108,99,255,0.12);
+    }
+    .platform-badge .icon { font-size:16px; display:block; margin-bottom:2px; }
 
-    /* ── Auth section ── */
-    .auth-section {
-      background: var(--bg1); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px; margin-bottom: 14px;
+    /* Main toggle */
+    .main-btn {
+      width:100%; padding:12px; border-radius:10px; border:none; cursor:pointer;
+      font-size:14px; font-weight:700; letter-spacing:0.3px; transition:all .2s;
+      margin-bottom:12px;
     }
-    .auth-section.logged-in { border-color: rgba(99,102,241,0.25); }
-
-    .user-row {
-      display: flex; align-items: center; gap: 10px;
+    .main-btn.off {
+      background: linear-gradient(135deg,#6c63ff,#5a52d5);
+      color:#fff; box-shadow:0 4px 16px rgba(108,99,255,0.35);
     }
-    .avatar {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 13px; color: var(--indigo); flex-shrink: 0;
-    }
-    .user-info { flex: 1; min-width: 0; }
-    .user-name  { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user-email { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .btn-logout {
-      font-size: 11px; color: var(--text3); background: none;
-      border: none; cursor: pointer; padding: 4px 8px;
-      border-radius: 6px; transition: color 0.15s;
-    }
-    .btn-logout:hover { color: var(--rose); }
-
-    /* ── Login form ── */
-    .login-form { display: flex; flex-direction: column; gap: 8px; }
-    .login-form label { font-size: 11px; color: var(--text3); margin-bottom: 2px; display: block; }
-    .login-form input {
-      width: 100%; background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px 10px; font-size: 12px; color: var(--text);
-      outline: none; transition: border-color 0.15s;
-    }
-    .login-form input:focus { border-color: var(--indigo); }
-    .login-form input::placeholder { color: var(--text3); }
-
-    /* ── Main toggle ── */
-    .toggle-section {
-      background: var(--bg1); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px; margin-bottom: 14px;
-    }
-    .toggle-row {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    }
-    .toggle-label { font-weight: 600; font-size: 13px; }
-    .toggle-sub   { font-size: 11px; color: var(--text3); margin-top: 2px; }
-
-    .toggle-switch {
-      width: 44px; height: 24px; border-radius: 12px;
-      border: none; cursor: pointer; position: relative;
-      background: rgba(255,255,255,0.1); transition: background 0.2s;
-      flex-shrink: 0;
-    }
-    .toggle-switch.on { background: var(--indigo); }
-    .toggle-switch::after {
-      content: ''; position: absolute; top: 2px; left: 2px;
-      width: 20px; height: 20px; border-radius: 50%; background: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-      transition: left 0.2s;
-    }
-    .toggle-switch.on::after { left: 22px; }
-
-    .status-dot {
-      display: inline-block; width: 7px; height: 7px;
-      border-radius: 50%; margin-right: 6px;
-      background: var(--text3); transition: background 0.2s;
-    }
-    .status-dot.active { background: var(--emerald); animation: pulse 1.5s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.5} }
-
-    /* ── Stop button ── */
-    .btn-stop {
-      width: 100%; padding: 8px; border-radius: 8px;
-      background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.2);
-      color: var(--rose); font-size: 12px; font-weight: 600;
-      cursor: pointer; transition: background 0.15s;
-    }
-    .btn-stop:hover { background: rgba(248,113,113,0.2); }
-
-    /* ── Sliders ── */
-    .slider-group { margin-bottom: 12px; }
-    .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .slider-label  { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
-    .slider-value  { font-size: 11px; font-family: monospace; color: var(--indigo); font-weight: 600; }
-    input[type=range] {
-      width: 100%; height: 4px; border-radius: 2px; outline: none;
-      -webkit-appearance: none; cursor: pointer;
-      background: rgba(255,255,255,0.08);
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 14px; height: 14px;
-      border-radius: 50%; background: var(--indigo);
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+    .main-btn.on {
+      background: linear-gradient(135deg,#ef4444,#dc2626);
+      color:#fff; box-shadow:0 4px 16px rgba(239,68,68,0.3);
     }
 
-    /* ── Select ── */
-    .styled-select {
-      width: 100%; background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 8px; padding: 7px 10px; font-size: 12px; color: var(--text);
-      outline: none; cursor: pointer; margin-bottom: 10px;
+    /* Status bar */
+    .status {
+      padding:8px 12px; border-radius:8px; font-size:11px; margin-bottom:12px;
+      border:1px solid; display:flex; align-items:center; gap:6px;
+    }
+    .status.ok   { background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.25); color:#86efac; }
+    .status.info { background:rgba(108,99,255,0.1); border-color:rgba(108,99,255,0.25); color:#a5b4fc; }
+    .status.warn { background:rgba(251,191,36,0.1); border-color:rgba(251,191,36,0.25); color:#fde68a; }
+    .dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+
+    /* Controls */
+    .ctrl { margin-bottom:10px; }
+    .ctrl label { display:block; font-size:11px; color:rgba(255,255,255,0.45); margin-bottom:4px; }
+    .ctrl .row { display:flex; align-items:center; gap:8px; }
+    .ctrl input[type=range] { flex:1; accent-color:#6c63ff; }
+    .ctrl .val { font-size:11px; min-width:32px; text-align:right; color:#9d96ff; }
+    .ctrl select {
+      width:100%; background:#1a1b2e; color:#e8e8f0; border:1px solid rgba(255,255,255,0.1);
+      border-radius:6px; padding:6px 8px; font-size:12px;
+    }
+    .ctrl-row { display:flex; gap:8px; }
+
+    /* Small buttons */
+    .btn-sm {
+      padding:7px 12px; border-radius:7px; border:none; cursor:pointer;
+      font-size:11px; font-weight:600; transition:all .15s;
+    }
+    .btn-outline {
+      background:transparent; border:1px solid rgba(255,255,255,0.12);
+      color:rgba(255,255,255,0.5);
+    }
+    .btn-outline:hover { border-color:rgba(108,99,255,0.5); color:#9d96ff; }
+
+    /* Toggle switch */
+    .toggle-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .toggle-row label { font-size:11px; color:rgba(255,255,255,0.5); }
+    .switch { position:relative; width:36px; height:20px; }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider {
+      position:absolute; inset:0; background:#1e2130; border-radius:20px;
+      cursor:pointer; transition:.2s;
+    }
+    .slider:before {
+      content:''; position:absolute; width:14px; height:14px;
+      left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;
+    }
+    input:checked + .slider { background:#6c63ff; }
+    input:checked + .slider:before { transform:translateX(16px); }
+
+    /* Section title */
+    .section-title {
+      font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+      color:rgba(255,255,255,0.25); margin-bottom:10px; padding-bottom:6px;
+      border-bottom:1px solid rgba(255,255,255,0.05);
     }
 
-    /* ── Buttons ── */
-    .btn-primary {
-      width: 100%; padding: 9px; border-radius: 8px;
-      background: var(--indigo); border: none; color: #fff;
-      font-size: 12px; font-weight: 600; cursor: pointer;
-      transition: background 0.15s; margin-bottom: 8px;
-    }
-    .btn-primary:hover { background: var(--indigo2); }
-    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+    /* Plan badge */
+    .plan { font-size:10px; padding:1px 7px; border-radius:10px; font-weight:700; }
+    .plan-free { background:rgba(148,163,184,0.15); color:#94a3b8; }
+    .plan-pro  { background:rgba(168,85,247,0.2); color:#c084fc; }
+    .plan-team { background:rgba(59,130,246,0.2); color:#60a5fa; }
 
-    .btn-ghost {
-      width: 100%; padding: 8px; border-radius: 8px;
-      background: transparent; border: 1px solid var(--border);
-      color: var(--text2); font-size: 12px; font-weight: 500;
-      cursor: pointer; transition: border-color 0.15s, color 0.15s;
-      margin-bottom: 8px;
+    /* Install guide */
+    .guide-card {
+      background:#12131f; border-radius:8px; padding:12px;
+      border:1px solid rgba(255,255,255,0.06); margin-bottom:8px;
     }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+    .guide-card h4 { font-size:12px; font-weight:700; margin-bottom:6px; }
+    .guide-card ol { padding-left:16px; }
+    .guide-card li { font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:3px; line-height:1.5; }
+    .guide-card a { color:#6c63ff; text-decoration:none; }
 
-    /* ── Info row ── */
-    .info-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 0; border-top: 1px solid var(--border); margin-top: 4px;
+    /* Platforms list */
+    .platform-list { margin-bottom:12px; }
+    .platform-row {
+      display:flex; align-items:center; padding:7px 0;
+      border-bottom:1px solid rgba(255,255,255,0.05); gap:10px;
     }
-    .info-row a { font-size: 11px; color: var(--indigo); text-decoration: none; }
-    .info-row a:hover { text-decoration: underline; }
-    .version { font-size: 10px; color: var(--text3); font-family: monospace; }
-
-    /* ── Pro gate ── */
-    .pro-gate {
-      background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2);
-      border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 12px;
+    .platform-row:last-child { border:none; }
+    .platform-icon { font-size:18px; flex-shrink:0; }
+    .platform-info { flex:1; }
+    .platform-name { font-size:12px; font-weight:600; }
+    .platform-url  { font-size:10px; color:rgba(255,255,255,0.3); }
+    .support-badge {
+      font-size:9px; padding:2px 6px; border-radius:10px; font-weight:700;
     }
-    .pro-gate p { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
-
-    /* ── Compatibility bar ── */
-    .compat-bar {
-      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
-    }
-    .compat-item {
-      display: flex; align-items: center; gap: 4px;
-      font-size: 10px; font-weight: 500;
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: 6px; padding: 4px 8px; color: var(--text3);
-    }
-    .compat-item.ok { color: var(--emerald); border-color: rgba(52,211,153,0.2); }
-
-    .spinner {
-      display: inline-block; width: 12px; height: 12px;
-      border: 2px solid rgba(255,255,255,0.2);
-      border-top-color: #fff; border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .full    { background:rgba(34,197,94,0.15); color:#86efac; }
+    .partial { background:rgba(251,191,36,0.15); color:#fde68a; }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <div class="header">
-    <div class="logo">
-      <span>🔊</span>
-      A3B<em> Narrator</em>
-    </div>
-    <span id="planBadge" class="plan-badge plan-free">Free</span>
+<div class="header">
+  <div class="logo">🔊</div>
+  <div>
+    <div class="title">A3B <span>Narrator</span></div>
+  </div>
+  <div class="badge-platform" id="platform-badge">—</div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-tab="narrator">🎙 Narrador</div>
+  <div class="tab" data-tab="platforms">🌐 Plataformas</div>
+  <div class="tab" data-tab="settings">⚙️ Ajustes</div>
+  <div class="tab" data-tab="account">👤 Cuenta</div>
+</div>
+
+<!-- ── Tab Narrador ─────────────────────────── -->
+<div class="tab-content active" id="tab-narrator">
+  <div id="status-bar" class="status info">
+    <div class="dot"></div>
+    <span id="status-text">Detectando plataforma...</span>
   </div>
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab active" data-tab="narrator">Narrador</button>
-    <button class="tab" data-tab="settings">Ajustes</button>
-    <button class="tab" data-tab="account">Cuenta</button>
-    <button class="tab" data-tab="android">Android</button>
+  <div class="platform-grid">
+    <div class="platform-badge" id="pb-coursera"><span class="icon">📚</span>Coursera</div>
+    <div class="platform-badge" id="pb-edx"><span class="icon">🎓</span>edX</div>
+    <div class="platform-badge" id="pb-udemy"><span class="icon">🔥</span>Udemy</div>
+    <div class="platform-badge" id="pb-udacity"><span class="icon">🚀</span>Udacity</div>
+    <div class="platform-badge" id="pb-datacamp"><span class="icon">📊</span>DataCamp</div>
+    <div class="platform-badge" id="pb-linkedin"><span class="icon">💼</span>LinkedIn</div>
+    <div class="platform-badge" id="pb-youtube"><span class="icon">▶️</span>YouTube</div>
+    <div class="platform-badge" id="pb-generic"><span class="icon">🌐</span>Otras</div>
   </div>
 
-  <!-- ── TAB: Narrador ── -->
-  <div class="pane active" id="pane-narrator">
+  <button class="main-btn off" id="toggle-btn">▶ Activar Narrador</button>
 
-    <!-- Auth status -->
-    <div id="authSection" class="auth-section">
-      <!-- Se rellena por JS -->
-    </div>
-
-    <!-- Toggle -->
-    <div class="toggle-section">
-      <div class="toggle-row">
-        <div>
-          <div class="toggle-label">
-            <span id="statusDot" class="status-dot"></span>
-            <span id="statusLabel">Narrador desactivado</span>
-          </div>
-          <div class="toggle-sub" id="statusSub">Activa los subtítulos CC en el video</div>
-        </div>
-        <button id="toggleBtn" class="toggle-switch"></button>
-      </div>
-    </div>
-
-    <button id="stopBtn" class="btn-stop" style="display:none">⏹ Detener narración</button>
-
+  <div class="ctrl-row" style="margin-bottom:12px">
+    <button class="btn-sm btn-outline" id="stop-btn" style="flex:1">⏹ Pausar</button>
+    <button class="btn-sm btn-outline" id="test-btn" style="flex:1">🔍 Detectar</button>
   </div>
 
-  <!-- ── TAB: Ajustes ── -->
-  <div class="pane" id="pane-settings">
-
-    <div class="slider-group">
-      <div class="slider-header">
-        <span class="slider-label">Velocidad</span>
-        <span class="slider-value" id="speedVal">1.0×</span>
-      </div>
-      <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-header">
-        <span class="slider-label">Volumen</span>
-        <span class="slider-value" id="volumeVal">100%</span>
-      </div>
-      <input type="range" id="volume" min="0" max="1" step="0.05" value="1">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-header">
-        <span class="slider-label">Tono</span>
-        <span class="slider-value" id="pitchVal">1.0</span>
-      </div>
-      <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
-    </div>
-
-    <div class="slider-header" style="margin-bottom:6px">
-      <span class="slider-label">Voz</span>
-    </div>
-    <select id="voiceSelect" class="styled-select">
-      <option value="">Automática</option>
+  <div class="section-title">Traducción en tiempo real</div>
+  <div class="ctrl">
+    <label>Idioma destino</label>
+    <select id="lang-select">
+      <option value="es">🇪🇸 Español</option>
+      <option value="pt">🇧🇷 Portugués</option>
+      <option value="fr">🇫🇷 Francés</option>
+      <option value="de">🇩🇪 Alemán</option>
+      <option value="it">🇮🇹 Italiano</option>
+      <option value="ja">🇯🇵 Japonés</option>
+      <option value="ko">🇰🇷 Coreano</option>
+      <option value="zh">🇨🇳 Chino (simplificado)</option>
+      <option value="ar">🇸🇦 Árabe</option>
+      <option value="ru">🇷🇺 Ruso</option>
     </select>
+  </div>
+</div>
 
-    <div id="langSection">
-      <div class="slider-header" style="margin-bottom:6px">
-        <span class="slider-label">Idioma destino</span>
+<!-- ── Tab Plataformas ──────────────────────── -->
+<div class="tab-content" id="tab-platforms">
+  <div class="section-title">Plataformas soportadas</div>
+  <div class="platform-list">
+    <div class="platform-row">
+      <div class="platform-icon">📚</div>
+      <div class="platform-info">
+        <div class="platform-name">Coursera</div>
+        <div class="platform-url">coursera.org</div>
       </div>
-      <select id="langSelect" class="styled-select">
-        <option value="es">🇪🇸 Español</option>
-        <option value="pt">🇧🇷 Portugués</option>
-        <option value="fr">🇫🇷 Francés</option>
-        <option value="de">🇩🇪 Alemán</option>
-        <option value="it">🇮🇹 Italiano</option>
-        <option value="ja">🇯🇵 Japonés</option>
-        <option value="ko">🇰🇷 Coreano</option>
-        <option value="zh">🇨🇳 Chino</option>
-        <option value="ar">🇸🇦 Árabe</option>
-        <option value="ru">🇷🇺 Ruso</option>
-      </select>
-      <div id="langGate" class="pro-gate" style="display:none">
-        <p>Múltiples idiomas requieren plan PRO</p>
-        <a href="https://a3bhub.cloud/pricing" target="_blank">
-          <button class="btn-primary" style="width:auto;padding:6px 16px;margin:0">Ver planes →</button>
-        </a>
+      <span class="support-badge full">Completo</span>
+    </div>
+    <div class="platform-row">
+      <div class="platform-icon">🎓</div>
+      <div class="platform-info">
+        <div class="platform-name">edX / Open edX</div>
+        <div class="platform-url">edx.org · open.edx.org</div>
       </div>
+      <span class="support-badge full">Completo</span>
     </div>
-
-    <button id="testVoiceBtn" class="btn-ghost">🔊 Probar voz</button>
-    <button id="saveSettingsBtn" class="btn-primary">Guardar ajustes</button>
-
+    <div class="platform-row">
+      <div class="platform-icon">🔥</div>
+      <div class="platform-info">
+        <div class="platform-name">Udemy</div>
+        <div class="platform-url">udemy.com</div>
+      </div>
+      <span class="support-badge full">Completo</span>
+    </div>
+    <div class="platform-row">
+      <div class="platform-icon">🚀</div>
+      <div class="platform-info">
+        <div class="platform-name">Udacity</div>
+        <div class="platform-url">udacity.com · classroom.udacity.com</div>
+      </div>
+      <span class="support-badge full">Completo</span>
+    </div>
+    <div class="platform-row">
+      <div class="platform-icon">📊</div>
+      <div class="platform-info">
+        <div class="platform-name">DataCamp</div>
+        <div class="platform-url">datacamp.com · campus.datacamp.com</div>
+      </div>
+      <span class="support-badge full">Completo</span>
+    </div>
+    <div class="platform-row">
+      <div class="platform-icon">💼</div>
+      <div class="platform-info">
+        <div class="platform-name">LinkedIn Learning</div>
+        <div class="platform-url">linkedin.com/learning</div>
+      </div>
+      <span class="support-badge partial">Beta</span>
+    </div>
+    <div class="platform-row">
+      <div class="platform-icon">▶️</div>
+      <div class="platform-info">
+        <div class="platform-name">YouTube</div>
+        <div class="platform-url">youtube.com</div>
+      </div>
+      <span class="support-badge partial">Beta</span>
+    </div>
   </div>
 
-  <!-- ── TAB: Cuenta ── -->
-  <div class="pane" id="pane-account">
-    <div id="accountContent">
-      <!-- Rellena JS -->
+  <div class="guide-card">
+    <h4>💡 Cómo usar</h4>
+    <ol>
+      <li>Abre un video en cualquier plataforma soportada</li>
+      <li>Activa los subtítulos en inglés (CC) del video</li>
+      <li>Haz clic en <strong>Activar Narrador</strong></li>
+      <li>El narrador traducirá y leerá en tu idioma</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ── Tab Ajustes ──────────────────────────── -->
+<div class="tab-content" id="tab-settings">
+  <div class="section-title">Voz</div>
+  <div class="ctrl">
+    <label>Velocidad</label>
+    <div class="row">
+      <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
+      <span class="val" id="speed-val">1.0×</span>
     </div>
   </div>
-
-  <!-- ── TAB: Android ── -->
-  <div class="pane" id="pane-android">
-    <div class="compat-bar">
-      <div class="compat-item ok">✓ Kiwi Browser</div>
-      <div class="compat-item ok">✓ Firefox Nightly</div>
-      <div class="compat-item ok">✓ Chrome Android*</div>
-      <div class="compat-item ok">✓ Samsung Browser*</div>
+  <div class="ctrl">
+    <label>Volumen</label>
+    <div class="row">
+      <input type="range" id="volume" min="0" max="1" step="0.05" value="1">
+      <span class="val" id="volume-val">100%</span>
     </div>
-
-    <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:12px;line-height:1.6;">
-      <strong style="color:#fff">Kiwi Browser</strong> (recomendado): instala esta misma extensión desde el ZIP.<br><br>
-      <strong style="color:#fff">Chrome/Samsung*</strong>: usa el bookmarklet en <code style="color:#a5b4fc">a3bhub.cloud/docs</code>
+  </div>
+  <div class="ctrl">
+    <label>Tono</label>
+    <div class="row">
+      <input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1">
+      <span class="val" id="pitch-val">1.0</span>
     </div>
+  </div>
+  <div class="ctrl">
+    <label>Voz del sistema</label>
+    <select id="voice-select"><option>Cargando...</option></select>
+  </div>
+  <div class="ctrl">
+    <button class="btn-sm btn-outline" id="test-voice" style="width:100%">🔈 Probar voz</button>
+  </div>
 
-    <a href="https://a3bhub.cloud/docs" target="_blank">
-      <button class="btn-primary">Ver guía de instalación →</button>
+  <div class="section-title" style="margin-top:14px">Visualización</div>
+  <div class="toggle-row">
+    <label>Mostrar overlay en pantalla</label>
+    <label class="switch">
+      <input type="checkbox" id="overlay-toggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+</div>
+
+<!-- ── Tab Cuenta ───────────────────────────── -->
+<div class="tab-content" id="tab-account">
+  <div id="auth-section">
+    <div class="status warn">
+      <div class="dot"></div>
+      <span>No has iniciado sesión. Inicia sesión para acceso PRO.</span>
+    </div>
+    <div class="guide-card">
+      <h4>🚀 Beneficios PRO</h4>
+      <ol>
+        <li>Traducción DeepL de mayor calidad</li>
+        <li>10 idiomas destino</li>
+        <li>Historial de frases (30 días)</li>
+        <li>Diccionario personal</li>
+        <li>Sin límites de traducción</li>
+      </ol>
+    </div>
+    <a href="https://app.a3bhub.cloud/register" target="_blank"
+       style="display:block;text-align:center;padding:10px;background:linear-gradient(135deg,#6c63ff,#5a52d5);color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:13px;">
+      Crear cuenta gratis →
     </a>
-    <a href="https://a3bhub.cloud" target="_blank">
-      <button class="btn-ghost">a3bhub.cloud</button>
-    </a>
   </div>
-
-  <!-- Footer -->
-  <div class="info-row" style="padding: 8px 16px; margin-top:0;">
-    <a href="https://a3bhub.cloud" target="_blank">a3bhub.cloud</a>
-    <span class="version">v3.0.0</span>
+  <div id="user-section" style="display:none">
+    <div class="status ok">
+      <div class="dot"></div>
+      <span id="user-email">usuario@email.com</span>
+      <span class="plan" id="user-plan">FREE</span>
+    </div>
+    <button class="btn-sm btn-outline" id="logout-btn" style="width:100%;margin-top:8px">
+      Cerrar sesión
+    </button>
   </div>
+</div>
 
-  <script src="popup.js"></script>
+<script src="popup.js"></script>
 </body>
 </html>

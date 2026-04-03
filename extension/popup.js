@@ -1,365 +1,255 @@
-// ─── A3B Popup v3.0 ──────────────────────
-const API = 'https://api.a3bhub.cloud'
+// ─── A3B Popup v3.1 ──────────────────────────────────────────────────────────
+const runtime = typeof browser !== 'undefined' ? browser : chrome
 
-let user = null
-let settings = {
-  voiceSpeed: 1, voiceVolume: 1, voicePitch: 1,
-  voiceName: null, targetLang: 'es',
-  showOverlay: true, translator: 'google',
+// ─── Estado ───────────────────────────────────────────────────────────────────
+let active   = false
+let platform = 'generic'
+let settings = {}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id)
+
+function setStatus(msg, type = 'info') {
+  const bar = $('status-bar')
+  const txt = $('status-text')
+  bar.className = `status ${type}`
+  txt.textContent = msg
 }
-let isActive = false
 
-// ─── Init ─────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadState()
-  renderAuth()
-  renderAccount()
-  setupTabs()
-  setupControls()
+function highlightPlatform(name) {
+  document.querySelectorAll('.platform-badge').forEach(el => el.classList.remove('detected'))
+  const el = $(`pb-${name}`)
+  if (el) el.classList.add('detected')
+  $('platform-badge').textContent = name.toUpperCase()
+}
+
+// ─── Cargar settings guardados ────────────────────────────────────────────────
+async function loadSettings() {
+  return new Promise(resolve => {
+    runtime.storage.local.get(['settings','userToken','userPlan','userEmail'], data => {
+      settings = data.settings || {
+        voiceSpeed: 1, voiceVolume: 1, voicePitch: 1,
+        voiceName: null, targetLang: 'es', showOverlay: true,
+      }
+      resolve(data)
+    })
+  })
+}
+
+function saveSettings() {
+  runtime.storage.local.set({ settings })
+}
+
+// ─── Sincronizar controles con settings ──────────────────────────────────────
+function syncControls() {
+  $('speed').value   = settings.voiceSpeed
+  $('volume').value  = settings.voiceVolume
+  $('pitch').value   = settings.voicePitch
+  $('lang-select').value = settings.targetLang || 'es'
+  $('overlay-toggle').checked = settings.showOverlay !== false
+  $('speed-val').textContent  = parseFloat(settings.voiceSpeed).toFixed(1) + '×'
+  $('volume-val').textContent = Math.round(settings.voiceVolume * 100) + '%'
+  $('pitch-val').textContent  = parseFloat(settings.voicePitch).toFixed(1)
+}
+
+// ─── Cargar voces del sistema ─────────────────────────────────────────────────
+function loadVoices() {
+  const voices  = speechSynthesis.getVoices()
+  const sel     = $('voice-select')
+  const langMap = { es:['es','spanish'], pt:['pt','portuguese'], fr:['fr','french'],
+                    de:['de','german'], it:['it','italian'], ja:['ja','japanese'],
+                    ko:['ko','korean'], zh:['zh','chinese'], ar:['ar','arabic'], ru:['ru','russian'] }
+  const patterns = langMap[settings.targetLang] || ['es','spanish']
+
+  const filtered = voices.filter(v =>
+    patterns.some(p => v.lang.toLowerCase().startsWith(p) || v.name.toLowerCase().includes(p))
+  )
+
+  sel.innerHTML = '<option value="">— Sistema default —</option>' +
+    filtered.map(v => `<option value="${v.name}" ${v.name===settings.voiceName?'selected':''}>${v.name}</option>`).join('') +
+    (filtered.length === 0 ? voices.slice(0,10).map(v => `<option value="${v.name}">${v.name}</option>`).join('') : '')
+}
+
+speechSynthesis.onvoiceschanged = loadVoices
+
+// ─── Comunicación con content script ─────────────────────────────────────────
+async function sendToContent(msg) {
+  const [tab] = await runtime.tabs.query({ active: true, currentWindow: true })
+  if (!tab) return null
+  return new Promise(resolve => {
+    runtime.tabs.sendMessage(tab.id, msg, resp => {
+      if (runtime.lastError) resolve(null)
+      else resolve(resp)
+    })
+  })
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  const data = await loadSettings()
+  syncControls()
   loadVoices()
-  applySettings()
-  updateToggleUI()
+
+  // Mostrar info de usuario si hay sesión
+  if (data.userEmail) {
+    $('auth-section').style.display = 'none'
+    $('user-section').style.display = 'block'
+    $('user-email').textContent = data.userEmail
+    const plan = data.userPlan || 'free'
+    const planEl = $('user-plan')
+    planEl.textContent = plan.toUpperCase()
+    planEl.className = `plan plan-${plan}`
+  }
+
+  // Estado actual del content script
+  const status = await sendToContent({ type: 'GET_STATUS' })
+  if (status) {
+    active   = status.active
+    platform = status.platform || 'generic'
+    highlightPlatform(platform)
+    updateToggle()
+    setStatus(
+      active
+        ? `Narrando en ${platform} → ${settings.targetLang.toUpperCase()}`
+        : `Listo en ${platform}. Activa los subtítulos CC y presiona Activar.`,
+      active ? 'ok' : 'info'
+    )
+  } else {
+    setStatus('Abre un video con subtítulos en inglés (CC)', 'warn')
+  }
+}
+
+function updateToggle() {
+  const btn = $('toggle-btn')
+  if (active) {
+    btn.textContent = '⏹ Desactivar Narrador'
+    btn.className   = 'main-btn on'
+  } else {
+    btn.textContent = '▶ Activar Narrador'
+    btn.className   = 'main-btn off'
+  }
+}
+
+// ─── Eventos ──────────────────────────────────────────────────────────────────
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab,.tab-content').forEach(el => el.classList.remove('active'))
+    tab.classList.add('active')
+    $(`tab-${tab.dataset.tab}`).classList.add('active')
+  })
 })
 
-// ─── Load state from storage ──────────────
-async function loadState() {
-  const data = await chrome.storage.local.get(['user', 'settings', 'active', 'accessToken'])
-  user = data.user ?? null
-  if (data.settings) settings = { ...settings, ...data.settings }
-  isActive = data.active ?? false
-}
-
-// ─── Render auth section in Narrator tab ──
-function renderAuth() {
-  const el = document.getElementById('authSection')
-  const badge = document.getElementById('planBadge')
-
-  if (user) {
-    const initial = (user.name?.[0] ?? user.email[0]).toUpperCase()
-    el.className = 'auth-section logged-in'
-    el.innerHTML = `
-      <div class="user-row">
-        <div class="avatar">${initial}</div>
-        <div class="user-info">
-          <div class="user-name">${user.name ?? 'Usuario'}</div>
-          <div class="user-email">${user.email}</div>
-        </div>
-        <button class="btn-logout" id="logoutBtn">Salir</button>
-      </div>
-    `
-    document.getElementById('logoutBtn').addEventListener('click', logout)
-    badge.textContent = user.plan.toUpperCase()
-    badge.className = `plan-badge plan-${user.plan}`
+// Toggle narrador
+$('toggle-btn').addEventListener('click', async () => {
+  if (!active) {
+    const data = await loadSettings()
+    const resp = await sendToContent({
+      type:            'ACTIVATE',
+      settings,
+      userPlan:        data.userPlan || 'free',
+      isAuthenticated: !!data.userToken,
+    })
+    if (resp?.ok) {
+      active   = true
+      platform = resp.platform || platform
+      highlightPlatform(platform)
+      setStatus(`Narrando en ${platform} → ${settings.targetLang.toUpperCase()}`, 'ok')
+    } else {
+      setStatus('No se pudo activar. ¿Estás en un video con subtítulos?', 'warn')
+    }
   } else {
-    el.className = 'auth-section'
-    el.innerHTML = `
-      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:10px;">
-        Inicia sesión para guardar historial y usar DeepL
-      </div>
-      <div class="login-form" id="loginForm">
-        <div>
-          <label>Email</label>
-          <input type="email" id="emailInput" placeholder="tu@email.com" autocomplete="email">
-        </div>
-        <div>
-          <label>Contraseña</label>
-          <input type="password" id="passInput" placeholder="••••••••" autocomplete="current-password">
-        </div>
-        <button class="btn-primary" id="loginBtn" style="margin-bottom:0">Iniciar sesión</button>
-        <div style="text-align:center;margin-top:4px">
-          <a href="https://a3bhub.cloud/register" target="_blank"
-            style="font-size:11px;color:#6366f1;text-decoration:none;">
-            Crear cuenta gratis →
-          </a>
-        </div>
-      </div>
-    `
-    document.getElementById('loginBtn').addEventListener('click', login)
-    document.getElementById('passInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') login()
-    })
+    await sendToContent({ type: 'DEACTIVATE' })
+    active = false
+    setStatus('Narrador desactivado', 'info')
   }
+  updateToggle()
+})
+
+// Detener narración
+$('stop-btn').addEventListener('click', () => sendToContent({ type: 'STOP' }))
+
+// Detectar subtítulo activo
+$('test-btn').addEventListener('click', async () => {
+  const resp = await sendToContent({ type: 'TEST_SUBTITLE' })
+  if (resp?.found) {
+    setStatus(`✓ Subtítulo detectado [${resp.platform}]: "${resp.text.slice(0,40)}..."`, 'ok')
+  } else {
+    setStatus('No se encontraron subtítulos. Activa CC en el video.', 'warn')
+  }
+})
+
+// Idioma destino
+$('lang-select').addEventListener('change', e => {
+  settings.targetLang = e.target.value
+  saveSettings()
+  loadVoices()
+  sendToContent({ type: 'UPDATE_SETTINGS', settings })
+})
+
+// Overlay toggle
+$('overlay-toggle').addEventListener('change', e => {
+  settings.showOverlay = e.target.checked
+  saveSettings()
+  sendToContent({ type: 'UPDATE_SETTINGS', settings })
+})
+
+// Sliders de voz
+const sliders = {
+  speed:  { key:'voiceSpeed',  valId:'speed-val',  fmt: v => parseFloat(v).toFixed(1)+'×' },
+  volume: { key:'voiceVolume', valId:'volume-val', fmt: v => Math.round(v*100)+'%' },
+  pitch:  { key:'voicePitch',  valId:'pitch-val',  fmt: v => parseFloat(v).toFixed(1) },
 }
-
-// ─── Render account tab ───────────────────
-function renderAccount() {
-  const el = document.getElementById('accountContent')
-  if (!user) {
-    el.innerHTML = `
-      <div style="text-align:center;padding:24px 0;">
-        <div style="font-size:24px;margin-bottom:8px;opacity:0.2">◈</div>
-        <p style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:16px;">
-          Inicia sesión para gestionar tu cuenta
-        </p>
-        <a href="https://a3bhub.cloud/login" target="_blank">
-          <button class="btn-primary" style="width:auto;padding:8px 20px">Iniciar sesión →</button>
-        </a>
-      </div>
-    `
-    return
-  }
-
-  const planFeatures = {
-    free:  ['Google TTS', 'EN → ES', 'Coursera'],
-    pro:   ['DeepL', '10 idiomas', 'Historial 30d', 'Diccionario'],
-    team:  ['Todo PRO', 'API', 'SRT Export', 'Admin'],
-  }
-  const features = planFeatures[user.plan] ?? planFeatures.free
-
-  el.innerHTML = `
-    <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:14px;margin-bottom:12px;">
-      <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:8px;">Plan actual</div>
-      <div style="font-size:22px;font-weight:800;margin-bottom:8px;text-transform:capitalize;">${user.plan}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;">
-        ${features.map(f => `<span style="font-size:10px;background:rgba(52,211,153,0.12);color:#6ee7b7;padding:2px 7px;border-radius:5px;">✓ ${f}</span>`).join('')}
-      </div>
-    </div>
-    ${user.plan === 'free' ? `
-      <a href="https://a3bhub.cloud/pricing" target="_blank">
-        <button class="btn-primary">Actualizar a PRO — $4.99/mes →</button>
-      </a>
-    ` : `
-      <a href="https://a3bhub.cloud/dashboard/billing" target="_blank">
-        <button class="btn-ghost">Gestionar suscripción</button>
-      </a>
-    `}
-    <a href="https://a3bhub.cloud/dashboard" target="_blank">
-      <button class="btn-ghost" style="margin-bottom:0">Abrir dashboard →</button>
-    </a>
-  `
-}
-
-// ─── Login ────────────────────────────────
-async function login() {
-  const email = document.getElementById('emailInput').value.trim()
-  const pass  = document.getElementById('passInput').value
-  const btn   = document.getElementById('loginBtn')
-  if (!email || !pass) return
-
-  btn.disabled = true
-  btn.innerHTML = '<span class="spinner"></span>'
-
-  try {
-    const res = await fetch(`${API}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pass }),
-    })
-    if (!res.ok) {
-      const err = await res.json()
-      showError(err.error ?? 'Credenciales incorrectas')
-      return
-    }
-    const data = await res.json()
-    user = data.user
-
-    await chrome.storage.local.set({
-      user: data.user,
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken,
-    })
-
-    // Notify content script
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (tab?.id) {
-      chrome.tabs.sendMessage(tab.id, { type: 'AUTH_UPDATED', user: data.user }).catch(() => {})
-    }
-
-    renderAuth()
-    renderAccount()
-    showSuccess('¡Sesión iniciada!')
-  } catch {
-    showError('Error de conexión')
-  } finally {
-    btn.disabled = false
-    btn.textContent = 'Iniciar sesión'
-  }
-}
-
-// ─── Logout ───────────────────────────────
-async function logout() {
-  const { accessToken, refreshToken } = await chrome.storage.local.get(['accessToken', 'refreshToken'])
-
-  if (accessToken) {
-    fetch(`${API}/api/auth/logout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-      body: JSON.stringify({ refreshToken }),
-    }).catch(() => {})
-  }
-
-  await chrome.storage.local.remove(['user', 'accessToken', 'refreshToken'])
-  user = null
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  if (tab?.id) {
-    chrome.tabs.sendMessage(tab.id, { type: 'AUTH_UPDATED', user: null }).catch(() => {})
-  }
-
-  renderAuth()
-  renderAccount()
-}
-
-// ─── Toggle narrator ──────────────────────
-async function toggleNarrator() {
-  isActive = !isActive
-  await chrome.storage.local.set({ active: isActive })
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  if (tab?.id) {
-    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE', value: isActive }).catch(() => {})
-  }
-  updateToggleUI()
-}
-
-function updateToggleUI() {
-  const btn  = document.getElementById('toggleBtn')
-  const dot  = document.getElementById('statusDot')
-  const lbl  = document.getElementById('statusLabel')
-  const sub  = document.getElementById('statusSub')
-  const stop = document.getElementById('stopBtn')
-
-  btn.className = isActive ? 'toggle-switch on' : 'toggle-switch'
-  dot.className = isActive ? 'status-dot active' : 'status-dot'
-  lbl.textContent = isActive ? 'Narrador activo' : 'Narrador desactivado'
-  sub.textContent = isActive ? 'Escuchando subtítulos en tiempo real...' : 'Activa los subtítulos CC en el video'
-  stop.style.display = isActive ? 'block' : 'none'
-}
-
-// ─── Setup tabs ───────────────────────────
-function setupTabs() {
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
-      document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'))
-      tab.classList.add('active')
-      document.getElementById(`pane-${tab.dataset.tab}`).classList.add('active')
-    })
+Object.entries(sliders).forEach(([id, {key, valId, fmt}]) => {
+  $(id).addEventListener('input', e => {
+    const val = parseFloat(e.target.value)
+    settings[key] = val
+    $(valId).textContent = fmt(val)
+    saveSettings()
+    sendToContent({ type: 'UPDATE_SETTINGS', settings })
   })
-}
+})
 
-// ─── Setup controls ───────────────────────
-function setupControls() {
-  document.getElementById('toggleBtn').addEventListener('click', toggleNarrator)
+// Selector de voz
+$('voice-select').addEventListener('change', e => {
+  settings.voiceName = e.target.value || null
+  saveSettings()
+  sendToContent({ type: 'UPDATE_SETTINGS', settings })
+})
 
-  document.getElementById('stopBtn').addEventListener('click', async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: 'STOP' }).catch(() => {})
-  })
-
-  // Sliders
-  const sliders = [
-    { id: 'speed',  key: 'voiceSpeed',  valId: 'speedVal',  fmt: v => `${parseFloat(v).toFixed(1)}×` },
-    { id: 'volume', key: 'voiceVolume', valId: 'volumeVal', fmt: v => `${Math.round(v * 100)}%` },
-    { id: 'pitch',  key: 'voicePitch',  valId: 'pitchVal',  fmt: v => parseFloat(v).toFixed(1) },
-  ]
-  sliders.forEach(({ id, key, valId, fmt }) => {
-    const el = document.getElementById(id)
-    el.addEventListener('input', () => {
-      settings[key] = parseFloat(el.value)
-      document.getElementById(valId).textContent = fmt(el.value)
-    })
-  })
-
-  // Language selector — gate for free users
-  const langSelect = document.getElementById('langSelect')
-  const langGate   = document.getElementById('langGate')
-  langSelect.addEventListener('change', () => {
-    if (!user || user.plan === 'free') {
-      langSelect.value = 'es'
-      langGate.style.display = 'block'
-      return
-    }
-    langGate.style.display = 'none'
-    settings.targetLang = langSelect.value
-  })
-
-  document.getElementById('testVoiceBtn').addEventListener('click', async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    if (tab?.id) {
-      chrome.tabs.sendMessage(tab.id, { type: 'TEST_VOICE' }).catch(() => {})
-    }
-  })
-
-  document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings)
-}
-
-// ─── Load voices ──────────────────────────
-function loadVoices() {
-  const sel = document.getElementById('voiceSelect')
-  const populate = () => {
-    const voices = speechSynthesis.getVoices()
-    sel.innerHTML = '<option value="">Automática</option>'
-    voices
-      .filter(v => v.lang.startsWith(settings.targetLang))
-      .forEach(v => {
-        const opt = document.createElement('option')
-        opt.value = v.name
-        opt.textContent = `${v.name} (${v.lang})`
-        if (v.name === settings.voiceName) opt.selected = true
-        sel.appendChild(opt)
-      })
+// Probar voz
+$('test-voice-btn') && $('test-voice-btn').addEventListener('click', () => {
+  const voices = speechSynthesis.getVoices()
+  const utt    = new SpeechSynthesisUtterance('Hola, soy tu narrador A3B.')
+  utt.lang     = settings.targetLang + '-' + settings.targetLang.toUpperCase()
+  utt.rate     = settings.voiceSpeed
+  utt.volume   = settings.voiceVolume
+  if (settings.voiceName) {
+    const v = voices.find(v => v.name === settings.voiceName)
+    if (v) utt.voice = v
   }
-  populate()
-  speechSynthesis.addEventListener('voiceschanged', populate)
-  sel.addEventListener('change', () => { settings.voiceName = sel.value || null })
-}
+  speechSynthesis.cancel()
+  speechSynthesis.speak(utt)
+})
 
-// ─── Apply settings to UI ─────────────────
-function applySettings() {
-  document.getElementById('speed').value  = settings.voiceSpeed
-  document.getElementById('volume').value = settings.voiceVolume
-  document.getElementById('pitch').value  = settings.voicePitch
-  document.getElementById('speedVal').textContent  = `${settings.voiceSpeed.toFixed(1)}×`
-  document.getElementById('volumeVal').textContent = `${Math.round(settings.voiceVolume * 100)}%`
-  document.getElementById('pitchVal').textContent  = settings.voicePitch.toFixed(1)
-  document.getElementById('langSelect').value = settings.targetLang
-}
+// Botón probar voz (ID correcto)
+$('test-voice') && $('test-voice').addEventListener('click', () => {
+  const utt = new SpeechSynthesisUtterance('Narrador A3B activado en ' + platform)
+  utt.lang   = settings.targetLang === 'es' ? 'es-ES' : settings.targetLang
+  utt.rate   = settings.voiceSpeed
+  utt.volume = settings.voiceVolume
+  speechSynthesis.cancel()
+  speechSynthesis.speak(utt)
+})
 
-// ─── Save settings ────────────────────────
-async function saveSettings() {
-  await chrome.storage.local.set({ settings })
+// Logout
+$('logout-btn') && $('logout-btn').addEventListener('click', () => {
+  runtime.storage.local.remove(['userToken','userPlan','userEmail'], () => {
+    $('auth-section').style.display = 'block'
+    $('user-section').style.display = 'none'
+  })
+})
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  if (tab?.id) {
-    chrome.tabs.sendMessage(tab.id, { type: 'UPDATE_SETTINGS', settings }).catch(() => {})
-  }
-
-  // Sync con backend si está autenticado
-  if (user) {
-    const { accessToken } = await chrome.storage.local.get('accessToken')
-    if (accessToken) {
-      fetch(`${API}/api/user/settings`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({
-          voiceSpeed: settings.voiceSpeed,
-          voiceVolume: settings.voiceVolume,
-          voicePitch: settings.voicePitch,
-          voiceName: settings.voiceName,
-          targetLang: settings.targetLang,
-        }),
-      }).catch(() => {})
-    }
-  }
-
-  showSuccess('Ajustes guardados')
-}
-
-// ─── Feedback ─────────────────────────────
-function showSuccess(msg) { flash(msg, '#34d399') }
-function showError(msg)   { flash(msg, '#f87171') }
-
-function flash(msg, color) {
-  const el = document.createElement('div')
-  el.textContent = msg
-  el.style.cssText = `
-    position: fixed; bottom: 44px; left: 50%; transform: translateX(-50%);
-    background: ${color}22; border: 1px solid ${color}44;
-    color: ${color}; font-size: 12px; font-weight: 600;
-    padding: 6px 14px; border-radius: 8px; z-index: 999;
-    white-space: nowrap; animation: fadeUp 0.3s ease;
-  `
-  document.body.appendChild(el)
-  setTimeout(() => el.remove(), 2500)
-}
+// ─── Arrancar ────────────────────────────────────────────────────────────────
+init()
