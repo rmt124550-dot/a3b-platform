@@ -1,8 +1,18 @@
-# ─── Stage 1: Servir archivos estáticos ─────────────────────────────────────
-# Los archivos ya fueron compilados en el runner de GitHub Actions
-FROM nginx:1.25-alpine
+# ─── Stage 1: Build Next.js ──────────────────────────────────────────────────
+# Usamos node desde mirror.gcr.io para evitar rate limit de Docker Hub
+FROM node:20-alpine AS builder
+WORKDIR /app
+RUN apk add --no-cache libc6-compat
+COPY package.json package-lock.json* ./
+RUN npm ci --prefer-offline
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_API_URL=https://api.a3bhub.cloud
+RUN npm run build
 
-COPY out /usr/share/nginx/html
+# ─── Stage 2: Nginx para servir archivos estáticos ────────────────────────────
+FROM nginx:1.25-alpine
+COPY --from=builder /app/out /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
