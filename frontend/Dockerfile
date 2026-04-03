@@ -6,15 +6,13 @@ COPY package.json ./
 RUN npm install
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# La URL del API debe estar en build time para Next.js static export
+ENV NEXT_PUBLIC_API_URL=https://api.a3bhub.cloud
 RUN npm run build
 
-# Etapa 2: nginx:1.25-alpine stock + reemplazar solo el HTML
+# Etapa 2: nginx servir archivos estáticos
 FROM nginx:1.25-alpine AS runner
-
-# Copiar archivos estáticos reemplazando el welcome page de nginx
 COPY --from=builder /app/out /usr/share/nginx/html
-
-# nginx:1.25-alpine escucha en puerto 80 por defecto — NO modificamos nada más
 
 EXPOSE 80
 
