@@ -49,6 +49,10 @@ services:
       - DEEPL_API_KEY=${DEEPL_API_KEY}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - FRONTEND_URL=${FRONTEND_URL}
+    labels:
+      # Prioridad alta para ganar sobre containers viejos conflictivos
+      - "traefik.http.routers.compose-hack-haptic-hard-drive-755gto-37-web.priority=200"
+      - "traefik.http.routers.compose-hack-haptic-hard-drive-755gto-37-websecure.priority=200"
     networks:
       - a3b_net
 
@@ -64,6 +68,12 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    labels:
+      # Prioridad alta para ganar sobre containers viejos conflictivos
+      - "traefik.http.routers.compose-hack-haptic-hard-drive-755gto-38-web.priority=200"
+      - "traefik.http.routers.compose-hack-haptic-hard-drive-755gto-38-websecure.priority=200"
+      - "traefik.http.routers.compose-hack-haptic-hard-drive-755gto-39-web.priority=200"
+      - "traefik.http.routers.compose-hack-haptic-hard-drive-755gto-39-websecure.priority=200"
     networks:
       - a3b_net
 
