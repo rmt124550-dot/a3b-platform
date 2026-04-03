@@ -5,7 +5,6 @@ import { logger } from '../utils/logger'
 interface AppError extends Error {
   status?:  number
   code?:    string
-  expose?:  boolean
 }
 
 export function errorHandler(
@@ -15,8 +14,7 @@ export function errorHandler(
   _next: NextFunction
 ) {
   // Zod validation errors
-  if (err instanceof ZodError
-  // @ts-ignore) {
+  if (err instanceof ZodError) {
     return res.status(422).json({
       error:   'Validation failed',
       details: err.errors.map(e => ({
@@ -28,12 +26,12 @@ export function errorHandler(
   }
 
   // Prisma unique constraint
-  if (err.code === 'P2002') {
+  if ((err as any).code === 'P2002') {
     return res.status(409).json({ error: 'Resource already exists' })
   }
 
   // Prisma not found
-  if (err.code === 'P2025') {
+  if ((err as any).code === 'P2025') {
     return res.status(404).json({ error: 'Resource not found' })
   }
 
@@ -50,7 +48,7 @@ export function errorHandler(
     return res.status(403).json({ error: 'CORS: Origin not allowed' })
   }
 
-  // Log unexpected errors (NO exponer stack en producción)
+  // Log unexpected errors
   const statusCode = err.status ?? 500
   logger.error({
     event:     'UNHANDLED_ERROR',
