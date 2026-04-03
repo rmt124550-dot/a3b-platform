@@ -18,7 +18,7 @@ const saveSchema = z.object({
 
 // ─── GET /api/history ─────────────────────
 // Free: sin acceso | Pro: 30 días | Team: ilimitado
-historyRouter.get('/', requirePlan(['pro', 'team']), async (req, res, next) => {
+historyRouter.get('/', requirePlan('pro', 'team'), async (req, res, next) => {
   try {
     const { page = '1', limit = '50', platform, q } = req.query
     const skip = (parseInt(page as string) - 1) * parseInt(limit as string)
@@ -62,7 +62,7 @@ historyRouter.get('/', requirePlan(['pro', 'team']), async (req, res, next) => {
 })
 
 // ─── POST /api/history ────────────────────
-historyRouter.post('/', requirePlan(['pro', 'team']), validate(saveSchema), async (req, res, next) => {
+historyRouter.post('/', requirePlan('pro', 'team'), validate(saveSchema), async (req, res, next) => {
   try {
     // Pro: límite de 30 días — limpieza automática de los más viejos
     if (req.user!.plan === 'pro') {
@@ -83,7 +83,7 @@ historyRouter.post('/', requirePlan(['pro', 'team']), validate(saveSchema), asyn
 })
 
 // ─── DELETE /api/history/:id ──────────────
-historyRouter.delete('/:id', requirePlan(['pro', 'team']), async (req, res, next) => {
+historyRouter.delete('/:id', requirePlan('pro', 'team'), async (req, res, next) => {
   try {
     await prisma.translationHistory.deleteMany({
       where: { id: req.params.id, userId: req.user!.id },
@@ -95,7 +95,7 @@ historyRouter.delete('/:id', requirePlan(['pro', 'team']), async (req, res, next
 })
 
 // ─── DELETE /api/history (all) ────────────
-historyRouter.delete('/', requirePlan(['pro', 'team']), async (req, res, next) => {
+historyRouter.delete('/', requirePlan('pro', 'team'), async (req, res, next) => {
   try {
     const { count } = await prisma.translationHistory.deleteMany({
       where: { userId: req.user!.id },
@@ -108,7 +108,7 @@ historyRouter.delete('/', requirePlan(['pro', 'team']), async (req, res, next) =
 
 // ─── GET /api/history/export ──────────────
 // Exportar como SRT (Team only)
-historyRouter.get('/export/srt', requirePlan(['team']), async (req, res, next) => {
+historyRouter.get('/export/srt', requirePlan('team'), async (req, res, next) => {
   try {
     const items = await prisma.translationHistory.findMany({
       where: { userId: req.user!.id },

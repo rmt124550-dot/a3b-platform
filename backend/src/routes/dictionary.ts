@@ -5,7 +5,7 @@ import { authenticate, requirePlan } from '../middleware/authenticate'
 import { validate } from '../middleware/validate'
 
 export const dictionaryRouter = Router()
-dictionaryRouter.use(authenticate, requirePlan(['pro', 'team']))
+dictionaryRouter.use(authenticate, requirePlan('pro', 'team'))
 
 const entrySchema = z.object({
   term: z.string().min(1).max(500),
