@@ -1,6 +1,6 @@
 # ─── Stage 1: Build Next.js ──────────────────────────────────────────────────
 # Usamos node desde mirror.gcr.io para evitar rate limit de Docker Hub
-FROM node:20-alpine AS builder
+FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json* ./
