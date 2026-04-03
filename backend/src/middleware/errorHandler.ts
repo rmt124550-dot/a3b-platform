@@ -1,22 +1,40 @@
 import { Request, Response, NextFunction } from 'express'
+import { ZodError } from 'zod'
+import { logger } from '../utils/logger'
+
+interface AppError extends Error {
+  status?:  number
+  code?:    string
+  expose?:  boolean
+}
 
 export function errorHandler(
-  err: Error,
-  _req: Request,
+  err: AppError,
+  req: Request,
   res: Response,
   _next: NextFunction
 ) {
-  console.error('[ERROR]', err.message, err.stack)
+  // Zod validation errors
+  if (err instanceof ZodError
+  // @ts-ignore) {
+    return res.status(422).json({
+      error:   'Validation failed',
+      details: err.errors.map(e => ({
+        field:   e.path.join('.'),
+        message: e.message,
+        code:    e.code,
+      })),
+    })
+  }
 
-  // Prisma errors
-  if (err.constructor.name === 'PrismaClientKnownRequestError') {
-    const prismaErr = err as any
-    if (prismaErr.code === 'P2002') {
-      return res.status(409).json({ error: 'Resource already exists' })
-    }
-    if (prismaErr.code === 'P2025') {
-      return res.status(404).json({ error: 'Resource not found' })
-    }
+  // Prisma unique constraint
+  if (err.code === 'P2002') {
+    return res.status(409).json({ error: 'Resource already exists' })
+  }
+
+  // Prisma not found
+  if (err.code === 'P2025') {
+    return res.status(404).json({ error: 'Resource not found' })
   }
 
   // JWT errors
@@ -27,11 +45,28 @@ export function errorHandler(
     return res.status(401).json({ error: 'Token expired' })
   }
 
-  // Default 500
-  const status = (err as any).status ?? 500
-  const message = process.env.NODE_ENV === 'production'
-    ? 'Internal server error'
-    : err.message
+  // CORS
+  if (err.message?.includes('CORS')) {
+    return res.status(403).json({ error: 'CORS: Origin not allowed' })
+  }
 
-  res.status(status).json({ error: message })
+  // Log unexpected errors (NO exponer stack en producción)
+  const statusCode = err.status ?? 500
+  logger.error({
+    event:     'UNHANDLED_ERROR',
+    message:   err.message,
+    stack:     err.stack,
+    path:      req.path,
+    method:    req.method,
+    ip:        req.ip,
+    requestId: req.headers['x-request-id'],
+    userId:    req.user?.id,
+  })
+
+  const isProd = process.env.NODE_ENV === 'production'
+  res.status(statusCode).json({
+    error:     statusCode >= 500 ? 'Internal server error' : err.message,
+    requestId: req.headers['x-request-id'],
+    ...(isProd ? {} : { stack: err.stack }),
+  })
 }
