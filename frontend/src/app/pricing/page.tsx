@@ -58,7 +58,7 @@ export default function PricingPage() {
           </Link>
           <h1 className="text-4xl font-black mb-3">Precios simples y honestos</h1>
           <p className="text-white/40 text-sm mb-8">
-            Prueba PRO 7 días gratis — sin tarjeta requerida
+            Prueba PRO 36 días gratis — sin tarjeta requerida
           </p>
 
           {/* Toggle mensual / anual */}
@@ -156,12 +156,12 @@ export default function PricingPage() {
                 {/* Badge trial */}
                 {plan.trial_no_card && !isAnnual && (
                   <div className="text-xs text-emerald-400/80 font-semibold mb-4">
-                    🎁 7 días gratis · Sin tarjeta
+                    🎁 36 días gratis · Sin tarjeta
                   </div>
                 )}
                 {plan.trial_no_card && isAnnual && (
                   <div className="text-xs text-emerald-400/80 font-semibold mb-4 mt-2">
-                    🎁 7 días gratis · Sin tarjeta
+                    🎁 36 días gratis · Sin tarjeta
                   </div>
                 )}
 
@@ -194,7 +194,7 @@ export default function PricingPage() {
                           ? 'bg-[#6366f1] text-white hover:bg-[#5558e8]'
                           : 'border border-white/12 text-white/70 hover:border-white/30 hover:text-white'
                       }`}>
-                      {isLoading ? '⏳ Redirigiendo...' : 'Probar 7 días gratis'}
+                      {isLoading ? '⏳ Redirigiendo...' : 'Probar 36 días gratis'}
                     </button>
                     <p className="text-center text-white/20 text-xs mt-2.5">
                       Sin tarjeta · Cancela cuando quieras
@@ -224,13 +224,13 @@ export default function PricingPage() {
           <div className="space-y-3">
             {[
               { q: '¿Necesito tarjeta para el trial?',
-                a: 'No. 7 días completamente gratis sin ningún método de pago.' },
+                a: 'No. 36 días completamente gratis sin ningún método de pago.' },
               { q: '¿Qué pasa al terminar el trial?',
                 a: 'Si no agregas tarjeta, vuelves al plan Free automáticamente. Sin cargos.' },
               { q: '¿Puedo cambiar de plan anual a mensual?',
                 a: 'Sí, desde Dashboard → Facturación. El cambio aplica al siguiente período.' },
               { q: '¿El plan anual incluye el trial?',
-                a: 'Sí. El plan anual también incluye 7 días gratis sin tarjeta.' },
+                a: 'Sí. El plan anual también incluye 36 días gratis sin tarjeta.' },
               { q: '¿El plan Free tiene límites de uso?',
                 a: 'No. Coursera es completamente ilimitado en el plan Free. Sin anuncios.' },
             ].map((faq, i) => (
