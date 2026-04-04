@@ -13,7 +13,6 @@ import { dictionaryRouter } from './routes/dictionary'
 import { billingRouter, webhookRouter } from './routes/billing'
 import { adminRouter }      from './routes/admin'
 import { selectorsRouter }
-import { affiliatesRouter } from './routes/affiliates'  from './routes/selectors'
 import { errorHandler }     from './middleware/errorHandler'
 import { notFound }         from './middleware/notFound'
 import { logger }           from './utils/logger'
