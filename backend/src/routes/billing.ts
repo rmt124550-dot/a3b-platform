@@ -76,7 +76,7 @@ billingRouter.get('/plans', (_req, res) => {
         interval: 'month', priceId: PLANS.pro.priceId,
         annualPrice: 39.99, annualPriceId: PLANS.pro_annual.priceId,
         annualMonthly: 3.33, savings: '33%', annualBadge: '🔥 2 meses gratis',
-        trial_days: 7, trial_no_card: true,
+        trial_days: 36, trial_no_card: true,
         features: [
           '7 días gratis — sin tarjeta',
           'YouTube · Udemy · edX · LinkedIn Learning',
@@ -92,7 +92,7 @@ billingRouter.get('/plans', (_req, res) => {
         interval: 'month', priceId: PLANS.team.priceId,
         annualPrice: 199.99, annualPriceId: PLANS.team_annual.priceId,
         annualMonthly: 16.67, savings: '17%', annualBadge: '💎 2 meses gratis',
-        trial_days: 7, trial_no_card: true,
+        trial_days: 36, trial_no_card: true,
         features: [
           '7 días gratis — sin tarjeta',
           'Todo lo de Pro',
@@ -141,7 +141,7 @@ billingRouter.post('/checkout', authenticate, async (req, res, next) => {
       cancel_url:  `${process.env.FRONTEND_URL}/pricing?canceled=1`,
       metadata:    { userId: user.id, plan },
       subscription_data: {
-        trial_period_days: 7,
+        trial_period_days: 36,
         metadata: { userId: user.id, plan },
       },
       // ── Trial sin tarjeta requerida ──────────────────────────────────────
