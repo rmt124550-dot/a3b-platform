@@ -303,4 +303,67 @@ export async function sendEmail({ to, subject, html }: {
     html,
   })
 }
+// ─── Email: trial expira en 6 días ───────────────────────────────────────────
+export async function sendTrialExpiringEmail(to: string, name: string, daysLeft: number) {
+  const BASE = process.env.FRONTEND_URL ?? 'https://app.a3bhub.cloud'
+  return resend.emails.send({
+    from:    FROM,
+    to:      [to],
+    subject: `⏰ Tu prueba de A3B Narrator termina en ${daysLeft} día${daysLeft===1?'':'s'}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0a0a15;color:#e0e0e0;padding:32px;border-radius:12px;">
+        <h2 style="color:#fff;margin:0 0 6px">Hola${name ? `, ${name}` : ''}! ⏰</h2>
+        <p style="color:#888;font-size:14px;margin:0 0 20px">
+          Tu período de prueba gratuita de A3B Narrator termina en <strong style="color:#fbbf24">${daysLeft} día${daysLeft===1?'':'s'}</strong>.
+        </p>
+        <div style="background:#1a1a2e;border:1px solid #2a2a4e;border-radius:8px;padding:20px;margin:0 0 20px">
+          <p style="margin:0 0 12px;font-size:14px;color:#e0e0e0;">Lo que perderías sin PRO:</p>
+          <ul style="margin:0;padding-left:20px;color:#888;font-size:13px;line-height:1.8">
+            <li>YouTube, Udemy, edX, LinkedIn Learning</li>
+            <li>Khan Academy y DataCamp</li>
+            <li>DeepL — traducción de mayor calidad</li>
+            <li>Historial y diccionario personal</li>
+          </ul>
+        </div>
+        <a href="${BASE}/dashboard/billing" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;">
+          Mantener acceso — $4.99/mes →
+        </a>
+        <p style="color:#555;font-size:12px;margin:20px 0 0">
+          Sin tarjeta durante el trial. Solo pagas si decides continuar.
+        </p>
+      </div>
+    `,
+  })
+}
+
+// ─── Email: trial expirado ────────────────────────────────────────────────────
+export async function sendTrialExpiredEmail(to: string, name: string) {
+  const BASE = process.env.FRONTEND_URL ?? 'https://app.a3bhub.cloud'
+  return resend.emails.send({
+    from:    FROM,
+    to:      [to],
+    subject: '🔒 Tu prueba de A3B Narrator ha terminado',
+    html: `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0a0a15;color:#e0e0e0;padding:32px;border-radius:12px;">
+        <h2 style="color:#fff;margin:0 0 6px">Tu prueba ha terminado 😔</h2>
+        <p style="color:#888;font-size:14px;margin:0 0 20px">
+          Hola${name ? `, ${name}` : ''}. Tu período de 36 días gratuitos de A3B Narrator ha concluido.
+        </p>
+        <p style="color:#888;font-size:14px;margin:0 0 20px">
+          Activa PRO por <strong style="color:#a5b4fc">$4.99/mes</strong> para recuperar el acceso completo a todas las plataformas.
+        </p>
+        <a href="${BASE}/dashboard/billing" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:14px;margin-bottom:16px;">
+          Activar PRO ahora →
+        </a>
+        <br>
+        <a href="${BASE}/pricing" style="display:inline-block;color:#6366f1;text-decoration:underline;font-size:13px;">
+          Ver todos los planes
+        </a>
+        <p style="color:#555;font-size:12px;margin:20px 0 0">
+          ¿Preguntas? Responde a este email o escríbenos a hello@a3bhub.cloud
+        </p>
+      </div>
+    `,
+  })
+}
 
