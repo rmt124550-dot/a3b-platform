@@ -428,7 +428,7 @@ export default function HomePage() {
                 cta:'Probar 7 días gratis', href:'/register?plan=team',
                 ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
               },
-            ].map(plan => (
+            ].map((plan: {name:string;price:string;period:string;border:string;bg:string;highlight?:boolean;trial?:string;features:string[];cta:string;href:string;ctaStyle:string}) => (
               <div key={plan.name} className={`${plan.bg} border ${plan.border} rounded-2xl p-8 relative`}>
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6366f1] text-[10px] font-black tracking-widest text-white px-3 py-1 rounded-full">
@@ -439,10 +439,10 @@ export default function HomePage() {
                 <div className="text-4xl font-black mb-1">
                   {plan.price}<span className="text-sm font-normal text-white/35">{plan.period}</span>
                 </div>
-                {(plan as any).trial && (
-                  <div className="text-xs text-emerald-400 font-semibold mb-5">{(plan as any).trial}</div>
+                {plan.trial && (
+                  <div className="text-xs text-emerald-400 font-semibold mb-5">{plan.trial}</div>
                 )}
-                {!(plan as any).trial && <div className="mb-6" />}
+                {!plan.trial && <div className="mb-6" />}
                 <ul className="space-y-2.5 text-sm text-white/55 text-left mb-8">
                   {plan.features.map(f => (
                     <li key={f} className="flex items-center gap-2">
@@ -469,7 +469,7 @@ export default function HomePage() {
                 cta:'Elegir Team', href:'/pricing',
                 ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
               },
-            ].map(plan => (
+            ].map((plan: {name:string;price:string;period:string;border:string;bg:string;highlight?:boolean;trial?:string;features:string[];cta:string;href:string;ctaStyle:string}) => (
               <div key={plan.name} className={`${plan.bg} border ${plan.border} rounded-2xl p-8 relative`}>
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6366f1] text-[10px] font-black px-3 py-1 rounded-full tracking-wider">
