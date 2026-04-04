@@ -5,107 +5,184 @@ import { useAuthStore } from '@/lib/auth-store'
 import { api } from '@/lib/api'
 
 interface Stats {
-  historyCount: number
+  historyCount:    number
   dictionaryCount: number
-  settings: { targetLang: string; translator: string }
+  platformsCount:  number
+  trialDaysLeft:   number | null
 }
 
-const PLAN_INFO: Record<string, { label: string; color: string; limit: string }> = {
-  free: { label: 'Free',  color: 'text-white/40', limit: 'Google TTS · Solo EN→ES' },
-  pro:  { label: 'Pro',   color: 'text-indigo',   limit: 'DeepL · 10 idiomas · Historial 30d' },
-  team: { label: 'Team',  color: 'text-violet',   limit: 'Todo PRO · API · SRT export' },
+const PLAN_INFO: Record<string, { label: string; color: string; desc: string }> = {
+  free: { label: 'Trial activo',  color: 'text-emerald-400',  desc: '36 días gratis · Todas las plataformas' },
+  pro:  { label: 'PRO',          color: 'text-[#a5b4fc]',    desc: 'Acceso completo · Todas las plataformas' },
+  team: { label: 'Team',         color: 'text-violet-400',   desc: 'Todo PRO · API · Usuarios ilimitados' },
 }
+
+const QUICK_ACTIONS = [
+  { href: 'https://github.com/rmt124550-dot/a3b-coursera-voice-narrator/releases/tag/v2.5.0',
+    icon: '⬇️', title: 'Descargar extensión v2.5.0',
+    desc: 'Chrome · Edge · Firefox · Kiwi', external: true },
+  { href: '/dashboard/billing', icon: '💳', title: 'Facturación',
+    desc: 'Trial · Planes · Historial de pagos', external: false },
+  { href: '/dashboard/history', icon: '📖', title: 'Mi historial',
+    desc: 'Frases traducidas y narradas', external: false },
+  { href: '/dashboard/dictionary', icon: '📚', title: 'Mi diccionario',
+    desc: 'Términos técnicos personalizados', external: false },
+  { href: '/dashboard/affiliates', icon: '💰', title: 'Afiliados',
+    desc: 'Gana 30% por cada referido', external: false },
+  { href: '/help', icon: '❓', title: 'Centro de ayuda',
+    desc: 'Guías · Instalación · FAQ', external: false },
+]
+
+const PLATFORMS = [
+  { name: 'Coursera',       icon: '🎓', plan: 'trial', url: 'coursera.org' },
+  { name: 'YouTube',        icon: '▶️', plan: 'pro',   url: 'youtube.com' },
+  { name: 'Udemy',          icon: '📚', plan: 'pro',   url: 'udemy.com' },
+  { name: 'edX',            icon: '🏛️', plan: 'pro',   url: 'edx.org' },
+  { name: 'LinkedIn',       icon: '💼', plan: 'pro',   url: 'linkedin.com/learning' },
+  { name: 'Khan Academy',   icon: '🌿', plan: 'pro',   url: 'khanacademy.org' },
+  { name: 'DataCamp',       icon: '📊', plan: 'pro',   url: 'datacamp.com' },
+]
 
 export default function DashboardPage() {
-  const { user } = useAuthStore()
+  const { user }   = useAuthStore()
   const [stats, setStats] = useState<Stats | null>(null)
 
   useEffect(() => {
-    api.get('/api/user/profile').then(({ data }) => {
+    Promise.all([
+      api.get('/api/history?limit=1').catch(() => ({ data: { total: 0 } })),
+      api.get('/api/dictionary?limit=1').catch(() => ({ data: { total: 0 } })),
+    ]).then(([hist, dict]) => {
       setStats({
-        historyCount: data.user._count.history,
-        dictionaryCount: data.user._count.dictionary,
-        settings: data.user.settings,
+        historyCount:    hist.data.total    ?? 0,
+        dictionaryCount: dict.data.total    ?? 0,
+        platformsCount:  7,
+        trialDaysLeft:   user?.trialDaysLeft ?? null,
       })
-    }).catch(() => {})
-  }, [])
+    })
+  }, [user])
 
-  const plan = PLAN_INFO[user?.plan ?? 'free']
-  const hour = new Date().getHours()
-  const greeting = hour < 13 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches'
+  const plan       = PLAN_INFO[user?.plan ?? 'free']
+  const isPro      = user?.plan === 'pro' || user?.plan === 'team'
+  const trialExp   = user?.trialExpired ?? false
+  const daysLeft   = user?.trialDaysLeft ?? null
 
   return (
     <div className="p-4 md:p-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-10 animate-fadeup">
-        <p className="text-sm text-white/35 font-mono mb-1">{greeting} —</p>
-        <h1 className="font-serif text-3xl md:text-4xl">{user?.name ?? 'Usuario'}</h1>
-        <div className="flex items-center gap-3 mt-3">
-          <span className={`badge badge-indigo text-[10px] ${user?.plan === 'team' ? 'badge-violet' : ''}`}>
-            {plan.label}
+
+      {/* ── Saludo + plan ─────────────────────────────────── */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-black mb-1">
+          Hola{user?.name ? `, ${user.name.split(' ')[0]}` : ''} 👋
+        </h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className={`text-sm font-bold ${
+            trialExp ? 'text-red-400' : plan.color
+          }`}>
+            {trialExp ? '⏰ Trial expirado' : plan.label}
           </span>
-          <span className="text-xs text-white/35">{plan.limit}</span>
-          {user?.plan === 'free' && (
-            <Link href="/pricing" className="text-xs text-indigo hover:text-violet transition-colors font-medium">
-              Actualizar a PRO →
-            </Link>
-          )}
+          <span className="text-white/25 text-xs">·</span>
+          <span className="text-white/40 text-xs">
+            {trialExp
+              ? 'Activa PRO para recuperar el acceso'
+              : daysLeft !== null && !isPro
+              ? `${daysLeft} días restantes de prueba`
+              : plan.desc}
+          </span>
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fadeup delay-100">
+      {/* ── Stats ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         {[
-          { label: 'Traducciones guardadas', value: stats?.historyCount ?? '—', icon: '◷', locked: user?.plan === 'free' },
-          { label: 'Términos en diccionario', value: stats?.dictionaryCount ?? '—', icon: '◉', locked: user?.plan === 'free' },
-          { label: 'Motor de traducción', value: stats?.settings?.translator?.toUpperCase() ?? 'Google', icon: '⟳', locked: false },
-          { label: 'Idioma destino', value: stats?.settings?.targetLang?.toUpperCase() ?? 'ES', icon: '◎', locked: false },
-        ].map((stat) => (
-          <div key={stat.label} className="card p-5 relative overflow-hidden">
-            {stat.locked && (
-              <div className="absolute inset-0 bg-surface/70 backdrop-blur-sm flex items-center justify-center rounded-2xl z-10">
-                <Link href="/pricing" className="text-xs text-indigo font-medium hover:underline">Requiere PRO</Link>
-              </div>
-            )}
-            <div className="font-mono text-indigo text-lg mb-2">{stat.icon}</div>
-            <div className="font-mono text-2xl font-medium mb-1">{stat.value}</div>
-            <div className="text-xs text-white/35">{stat.label}</div>
+          { label: 'Plataformas',      value: `${stats?.platformsCount ?? 7}`,      icon: '🌐', note: 'soportadas' },
+          { label: 'Frases narradas',  value: stats ? String(stats.historyCount)  : '—', icon: '◷', note: 'en historial', locked: !isPro && !trialExp },
+          { label: 'En diccionario',   value: stats ? String(stats.dictionaryCount): '—', icon: '◉', note: 'términos', locked: !isPro && !trialExp },
+          { label: 'Trial',            value: trialExp ? 'Expirado' : daysLeft !== null ? `${daysLeft}d` : isPro ? '∞' : '—',
+            icon: isPro ? '⭐' : trialExp ? '⏰' : '🎁', note: isPro ? 'acceso PRO' : 'restantes' },
+        ].map(s => (
+          <div key={s.label} className="bg-white/3 border border-white/8 rounded-xl p-4">
+            <div className="flex items-start justify-between mb-1">
+              <span className="text-xl">{s.icon}</span>
+              {s.locked && <span className="text-[10px] text-white/20 bg-white/5 px-1.5 rounded">PRO</span>}
+            </div>
+            <div className="text-xl font-black text-white">{s.value}</div>
+            <div className="text-white/30 text-xs mt-0.5">{s.note}</div>
           </div>
         ))}
       </div>
 
-      {/* Quick actions */}
-      <div className="animate-fadeup delay-200">
-        <h2 className="text-xs font-semibold text-white/35 uppercase tracking-widest mb-4">Acceso rápido</h2>
-        <div className="grid md:grid-cols-3 gap-3">
-          {[
-            { href: '/docs', icon: '↓', title: 'Instalar extensión', desc: 'Chrome, Edge, Firefox, Kiwi' },
-            { href: '/dashboard/settings', icon: '◎', title: 'Configurar voz', desc: 'Velocidad, tono, idioma' },
-            user?.plan === 'free'
-              ? { href: '/pricing', icon: '↑', title: 'Actualizar a PRO', desc: 'DeepL · Historial · 10 idiomas' }
-              : { href: '/dashboard/history', icon: '◷', title: 'Ver historial', desc: 'Tus traducciones guardadas' },
-          ].map((item) => (
-            <Link key={item.href} href={item.href} className="card p-5 group hover:border-indigo/40 transition-all">
-              <div className="font-mono text-white/30 group-hover:text-indigo text-xl mb-3 transition-colors">{item.icon}</div>
-              <div className="font-medium text-sm mb-1">{item.title}</div>
-              <div className="text-xs text-white/35">{item.desc}</div>
-            </Link>
-          ))}
+      {/* ── CTA upgrade si trial expirado ─────────────────── */}
+      {trialExp && (
+        <div className="bg-red-500/8 border border-red-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div className="font-black text-sm text-red-300 mb-1">Tu período de prueba ha terminado</div>
+            <div className="text-white/40 text-xs">Activa PRO para seguir usando A3B en todas las plataformas.</div>
+          </div>
+          <Link href="/dashboard/billing"
+            className="flex-shrink-0 bg-[#6366f1] text-white font-black px-6 py-2.5 rounded-xl hover:bg-[#5558e8] transition-all text-sm whitespace-nowrap">
+            🚀 Activar PRO — $4.99/mes
+          </Link>
+        </div>
+      )}
+
+      {/* ── Plataformas disponibles ────────────────────────── */}
+      <div className="bg-white/3 border border-white/8 rounded-2xl p-5 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-sm">Plataformas disponibles</h2>
+          <Link href="/help/platforms" className="text-white/30 text-xs hover:text-white/60">Ver guías →</Link>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {PLATFORMS.map(p => {
+            const available = isPro || p.plan === 'trial' || (!trialExp && p.plan === 'pro')
+            return (
+              <div key={p.name} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs border transition-all ${
+                available
+                  ? 'bg-white/3 border-white/8 text-white/70 hover:border-white/15'
+                  : 'border-white/4 text-white/20 cursor-default'
+              }`}>
+                <span className={available ? '' : 'opacity-30'}>{p.icon}</span>
+                <div>
+                  <div className="font-medium">{p.name}</div>
+                  <div className={`text-[10px] ${
+                    p.plan === 'trial'
+                      ? 'text-emerald-400/70'
+                      : available ? 'text-[#a5b4fc]/60' : 'text-white/20'
+                  }`}>
+                    {p.plan === 'trial' ? 'Incluido en trial' : available ? '⭐ PRO activo' : '⭐ PRO'}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      {/* Extension status */}
-      <div className="mt-6 card p-5 flex items-center gap-4 animate-fadeup delay-300">
-        <div className="w-10 h-10 rounded-xl bg-emerald/10 border border-emerald/20 flex items-center justify-center text-emerald text-lg flex-shrink-0">
-          🔊
-        </div>
-        <div className="flex-1">
-          <div className="text-sm font-medium">Extensión A3B Narrator v2.0.0</div>
-          <div className="text-xs text-white/35 mt-0.5">Chrome · Edge · Firefox · Kiwi Browser · Android Bookmarklet</div>
-        </div>
-        <Link href="/docs" className="btn-ghost text-xs px-4 py-2 flex-shrink-0">
-          Instalar
-        </Link>
+      {/* ── Acciones rápidas ──────────────────────────────── */}
+      <h2 className="font-bold text-sm mb-3">Acciones rápidas</h2>
+      <div className="grid sm:grid-cols-3 gap-3 mb-8">
+        {QUICK_ACTIONS.map(action => (
+          action.external ? (
+            <a key={action.title} href={action.href} target="_blank" rel="noopener noreferrer"
+              className="bg-white/3 border border-white/8 rounded-xl p-4 hover:border-white/15 transition-all">
+              <div className="text-xl mb-2">{action.icon}</div>
+              <div className="font-semibold text-sm">{action.title}</div>
+              <div className="text-white/35 text-xs mt-0.5">{action.desc}</div>
+            </a>
+          ) : (
+            <Link key={action.title} href={action.href}
+              className="bg-white/3 border border-white/8 rounded-xl p-4 hover:border-white/15 transition-all">
+              <div className="text-xl mb-2">{action.icon}</div>
+              <div className="font-semibold text-sm">{action.title}</div>
+              <div className="text-white/35 text-xs mt-0.5">{action.desc}</div>
+            </Link>
+          )
+        ))}
+      </div>
+
+      {/* ── Versión ───────────────────────────────────────── */}
+      <div className="text-white/15 text-xs text-center pt-4 border-t border-white/5">
+        A3B Narrator v2.5.0 · <a href="https://github.com/rmt124550-dot/a3b-coursera-voice-narrator/releases/tag/v2.5.0"
+          target="_blank" rel="noopener noreferrer" className="hover:text-white/40">Changelog</a>
       </div>
     </div>
   )
