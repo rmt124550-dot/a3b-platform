@@ -169,7 +169,6 @@ billingRouter.get('/plans', (_req, res) => {
     ],
   })
 })
-})
 
 // ─── POST /api/billing/checkout ───────────────────────────────────────────────
 billingRouter.post('/checkout', authenticate, async (req, res, next) => {
