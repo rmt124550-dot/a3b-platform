@@ -95,7 +95,8 @@ export async function trackFailedRequests(req: Request, res: Response, next: Nex
 
 export function sanitizeInput(req: Request, _res: Response, next: NextFunction) {
   // Eliminar $ y . en keys del body (MongoDB injection)
-  if (req.body && typeof req.body === 'object') {
+  // IMPORTANT: Skip Buffer (raw body para Stripe webhook — no corromper)
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
     req.body = sanitizeObject(req.body)
   }
   next()
@@ -160,3 +161,4 @@ export function blockMaliciousAgents(req: Request, res: Response, next: NextFunc
   }
   next()
 }
+
