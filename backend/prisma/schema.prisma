@@ -36,6 +36,7 @@ model User {
   updatedAt          DateTime  @updatedAt @map("updated_at")
   lastLoginAt        DateTime? @map("last_login_at")
   affiliateCode      String?   @map("affiliate_code")  // código del afiliado que lo refirió
+  trialEndsAt        DateTime? @map("trial_ends_at")  // null = trial nunca activado
   deletedAt          DateTime? @map("deleted_at")
 
   subscriptions Subscription[]
