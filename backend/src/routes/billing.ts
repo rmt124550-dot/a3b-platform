@@ -13,22 +13,48 @@ import {
 export const billingRouter  = Router()
 export const webhookRouter  = Router()
 
-// Instancia única de Stripe — inicialización lazy para evitar crash si no hay key en tests
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
   apiVersion: '2023-10-16' as any,
 })
-
-// Lazy init — evita crash en startup si la env var no está lista aún
-let _stripe: Stripe | null = null
-
 
 const PLANS: Record<string, { priceId: string; name: string }> = {
   pro:  { priceId: process.env.STRIPE_PRICE_PRO_MONTHLY  ?? '', name: 'Pro'  },
   team: { priceId: process.env.STRIPE_PRICE_TEAM_MONTHLY ?? '', name: 'Team' },
 }
 
+// Mapeo inverso: priceId → plan name
+const PRICE_TO_PLAN: Record<string, 'pro' | 'team'> = {}
+// Se rellena en runtime para evitar problemas si env vars llegan tarde
+function getPlanByPriceId(priceId: string): 'pro' | 'team' | null {
+  if (priceId === process.env.STRIPE_PRICE_PRO_MONTHLY)  return 'pro'
+  if (priceId === process.env.STRIPE_PRICE_TEAM_MONTHLY) return 'team'
+  return null
+}
+
+// ─── Helper: activar plan de un usuario ───────────────────────────────────────
+async function activatePlan(
+  userId: string,
+  plan: 'pro' | 'team',
+  stripeCustomerId: string,
+  stripeSubscriptionId: string,
+  status: 'active' | 'trialing' = 'active'
+) {
+  const existingSub = await prisma.subscription.findFirst({ where: { userId } })
+  if (existingSub) {
+    await prisma.subscription.update({
+      where: { id: existingSub.id },
+      data: { stripeCustomerId, stripeSubscriptionId, plan: plan as any, status },
+    })
+  } else {
+    await prisma.subscription.create({
+      data: { userId, stripeCustomerId, stripeSubscriptionId, plan: plan as any, status },
+    })
+  }
+  await prisma.user.update({ where: { id: userId }, data: { plan: plan as any } })
+  await redis.del(`user_cache:${userId}`)
+}
+
 // ─── GET /api/billing/plans ───────────────────────────────────────────────────
-// Planes disponibles (público — sin auth)
 billingRouter.get('/plans', (_req, res) => {
   res.json({
     plans: [
@@ -66,7 +92,6 @@ billingRouter.post('/checkout', authenticate, async (req, res, next) => {
       return res.status(400).json({ error: `Ya estás en el plan ${plan}` })
     }
 
-    // Get or create Stripe customer
     let sub = await prisma.subscription.findFirst({ where: { userId: user.id } })
     let customerId = sub?.stripeCustomerId
 
@@ -176,39 +201,49 @@ webhookRouter.post('/', async (req, res) => {
         const plan   = session.metadata?.plan as 'pro' | 'team'
         if (!userId || !plan) break
 
-        // Upsert manual — SubscriptionWhereUniqueInput no acepta { userId }
-        const existingSub = await prisma.subscription.findFirst({ where: { userId } })
-        if (existingSub) {
-          await prisma.subscription.update({
-            where: { id: existingSub.id },
-            data: {
-              stripeCustomerId:     session.customer as string,
-              stripeSubscriptionId: session.subscription as string,
-              plan: plan as any, status: 'active',
-            },
-          })
-        } else {
-          await prisma.subscription.create({
-            data: {
-              userId,
-              stripeCustomerId:     session.customer as string,
-              stripeSubscriptionId: session.subscription as string,
-              plan: plan as any, status: 'active',
-            },
-          })
-        }
-        await prisma.user.update({ where: { id: userId }, data: { plan: plan as any } })
+        await activatePlan(
+          userId, plan,
+          session.customer as string,
+          session.subscription as string,
+          'active'
+        )
 
-        // Invalidar caché del usuario
-        await redis.del(`user_cache:${userId}`)
-
-        // Email de bienvenida al plan
         const user = await prisma.user.findUnique({ where: { id: userId } })
-        if (user) {
-          sendUpgradeEmail(user.email, user.name ?? 'Usuario', plan).catch(() => {})
-        }
+        if (user) sendUpgradeEmail(user.email, user.name ?? 'Usuario', plan).catch(() => {})
 
         auditLog('PLAN_UPGRADED', userId, { plan, session: session.id })
+        break
+      }
+
+      // ── Suscripción creada (trial o directa sin checkout) ──────────────────
+      case 'customer.subscription.created': {
+        const subscription = event.data.object as Stripe.Subscription
+        const userId = subscription.metadata?.userId
+        if (!userId) break
+
+        // Determinar plan desde el priceId del primer item
+        const priceId = subscription.items.data[0]?.price?.id ?? ''
+        const plan = getPlanByPriceId(priceId)
+        if (!plan) {
+          logger.warn({ event: 'UNKNOWN_PRICE', priceId })
+          break
+        }
+
+        const status = subscription.status === 'trialing' ? 'trialing' : 'active'
+
+        await activatePlan(
+          userId, plan,
+          subscription.customer as string,
+          subscription.id,
+          status
+        )
+
+        const user = await prisma.user.findUnique({ where: { id: userId } })
+        if (user) sendUpgradeEmail(user.email, user.name ?? 'Usuario', plan).catch(() => {})
+
+        auditLog('SUBSCRIPTION_CREATED', userId, {
+          plan, subscriptionId: subscription.id, status
+        })
         break
       }
 
@@ -231,7 +266,6 @@ webhookRouter.post('/', async (req, res) => {
           },
         })
 
-        // Asegurar que el plan está activo (puede haber caído a free por fallo anterior)
         await prisma.subscription.update({ where: { id: sub.id }, data: { status: 'active' } })
         await redis.del(`user_cache:${sub.userId}`)
         auditLog('PAYMENT_SUCCEEDED', sub.userId, { amount: invoice.amount_paid, invoiceId: invoice.id })
@@ -249,9 +283,7 @@ webhookRouter.post('/', async (req, res) => {
         await redis.del(`user_cache:${sub.userId}`)
 
         const user = await prisma.user.findUnique({ where: { id: sub.userId } })
-        if (user) {
-          sendPaymentFailedEmail(user.email, user.name ?? 'Usuario').catch(() => {})
-        }
+        if (user) sendPaymentFailedEmail(user.email, user.name ?? 'Usuario').catch(() => {})
 
         auditLog('PAYMENT_FAILED', sub.userId, { invoiceId: invoice.id })
         break
@@ -275,9 +307,7 @@ webhookRouter.post('/', async (req, res) => {
         await redis.del(`user_cache:${sub.userId}`)
 
         const user = await prisma.user.findUnique({ where: { id: sub.userId } })
-        if (user) {
-          sendCancellationEmail(user.email, user.name ?? 'Usuario', endDate).catch(() => {})
-        }
+        if (user) sendCancellationEmail(user.email, user.name ?? 'Usuario', endDate).catch(() => {})
 
         auditLog('SUBSCRIPTION_CANCELED', sub.userId, { subscriptionId: subscription.id })
         break
