@@ -4,12 +4,8 @@ import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
   title: 'A3B Narrator — Aprende en Coursera en Español | Extensión Chrome',
-  description: 'Extensión gratuita de Chrome que traduce y narra en voz alta los subtítulos de Coursera en español. Sin API keys. Compatible con YouTube, Udemy, edX y LinkedIn Learning (PRO).',
-  keywords: [
-    'coursera en español', 'extensión chrome coursera', 'traductor subtítulos',
-    'narrador coursera', 'aprender inglés coursera', 'a3b narrator',
-    'subtítulos español automático', 'coursera traducción automática',
-  ],
+  description: 'Extensión gratuita de Chrome que traduce y narra los subtítulos de Coursera en español. Sin API keys. Compatible con YouTube, Udemy, edX y LinkedIn Learning (PRO).',
+  keywords: ['coursera en español','extensión chrome coursera','traductor subtítulos','narrador coursera','a3b narrator'],
   authors: [{ name: 'A3B Cloud', url: 'https://a3bhub.cloud' }],
   creator: 'A3B Cloud',
   metadataBase: new URL('https://a3bhub.cloud'),
@@ -19,7 +15,7 @@ export const metadata: Metadata = {
     url: 'https://a3bhub.cloud',
     siteName: 'A3B Narrator',
     title: 'A3B Narrator — Aprende en Coursera en Español',
-    description: 'Extensión gratuita de Chrome que traduce y narra subtítulos de Coursera en español en tiempo real. 7 días PRO gratis.',
+    description: 'Extensión gratuita de Chrome que traduce y narra subtítulos de Coursera en español. 7 días PRO gratis.',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'A3B Narrator' }],
   },
   twitter: {
@@ -28,10 +24,7 @@ export const metadata: Metadata = {
     description: 'Narra los subtítulos de Coursera en español automáticamente. Gratis.',
     images: ['/og-image.png'],
   },
-  robots: {
-    index: true, follow: true,
-    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
-  },
+  robots: { index: true, follow: true },
   alternates: { canonical: 'https://a3bhub.cloud' },
 },
   description: 'Extensión que traduce y narra subtítulos de Coursera, YouTube, Udemy, edX y LinkedIn en español. Gratis en Coursera. Prueba PRO 7 días gratis.',
