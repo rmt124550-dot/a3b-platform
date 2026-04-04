@@ -19,7 +19,7 @@ export default function PricingSection() {
       annualBadge: '🔥 2 meses gratis',
       border: 'border-[#6366f1]/60', bg: 'bg-[#6366f1]/5', highlight: true,
       features: ['YouTube · Udemy · edX · LinkedIn', 'DeepL — mayor calidad', '10 idiomas destino', 'Historial + diccionario'],
-      cta: 'Probar 7 días gratis', href: '/register?plan=pro',
+      cta: 'Probar 36 días gratis', href: '/register?plan=pro',
       ctaStyle: 'bg-[#6366f1] text-white hover:bg-[#5558e8]',
     },
     {
@@ -28,7 +28,7 @@ export default function PricingSection() {
       annualBadge: '💎 2 meses gratis',
       border: 'border-white/10', bg: 'bg-white/2', highlight: false,
       features: ['Todo lo de Pro', 'Usuarios ilimitados', 'Dashboard admin', 'API access', 'Soporte prioritario'],
-      cta: 'Probar 7 días gratis', href: '/register?plan=team',
+      cta: 'Probar 36 días gratis', href: '/register?plan=team',
       ctaStyle: 'border border-white/12 text-white/60 hover:border-white/25',
     },
   ]
@@ -37,7 +37,7 @@ export default function PricingSection() {
     <div className="max-w-4xl mx-auto text-center">
       <h2 className="text-3xl font-black mb-4">Empieza gratis</h2>
       <p className="text-white/40 mb-8">
-        Free incluye Coursera completo. PRO desbloquea todo — 7 días gratis · Sin tarjeta
+        Free incluye Coursera completo. PRO desbloquea todo — 36 días gratis · Sin tarjeta
       </p>
 
       {/* ── Toggle mensual / anual ──────────────────── */}
@@ -126,7 +126,7 @@ export default function PricingSection() {
                     </div>
                   ) : (
                     <div className="text-xs text-emerald-400/80 font-semibold mt-2.5">
-                      🎁 7 días gratis · Sin tarjeta
+                      🎁 36 días gratis · Sin tarjeta
                     </div>
                   )}
                 </div>
