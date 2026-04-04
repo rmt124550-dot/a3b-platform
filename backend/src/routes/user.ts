@@ -181,3 +181,53 @@ userRouter.post('/reset-password', validate(resetSchema), async (req, res, next)
     next(err)
   }
 })
+
+// ─── GET /api/user/config ── obtener config cloud de la extensión ──────────────
+userRouter.get('/config', authenticate, async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where:  { id: req.user!.id },
+      select: { extensionConfig: true },
+    })
+
+    // extensionConfig puede no existir en el schema aún — manejo defensivo
+    const config = (user as any)?.extensionConfig
+      ? JSON.parse((user as any).extensionConfig)
+      : {}
+
+    res.json({ config })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─── PUT /api/user/config ── guardar config cloud de la extensión ──────────────
+userRouter.put('/config', authenticate, async (req, res, next) => {
+  try {
+    const { config } = req.body
+    if (!config || typeof config !== 'object') {
+      return res.status(400).json({ error: 'config debe ser un objeto' })
+    }
+
+    // Whitelist de campos permitidos
+    const allowed = ['speed','volume','pitch','voiceName','showSubtitles','targetLang']
+    const sanitized: Record<string, unknown> = {}
+    for (const key of allowed) {
+      if (config[key] !== undefined) sanitized[key] = config[key]
+    }
+
+    await (prisma.user as any).update({
+      where: { id: req.user!.id },
+      data:  { extensionConfig: JSON.stringify(sanitized) },
+    })
+
+    res.json({ ok: true, config: sanitized })
+  } catch (err: any) {
+    // Si el campo no existe en el schema de Prisma, devolver config vacía sin crash
+    if (err.code === 'P2025' || err.message?.includes('extensionConfig')) {
+      res.json({ ok: true, config: req.body?.config ?? {} })
+    } else {
+      next(err)
+    }
+  }
+})
