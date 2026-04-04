@@ -60,7 +60,7 @@ export default function HistoryPage() {
 
   if (user?.plan === 'free') {
     return (
-      <div className="p-8 max-w-3xl">
+      <div className="p-4 md:p-8 max-w-3xl">
         <div className="mb-8">
           <h1 className="font-serif text-3xl mb-1">Historial</h1>
           <p className="text-sm text-white/40">Tus traducciones guardadas</p>
@@ -78,7 +78,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 md:p-8 max-w-4xl">
       <div className="flex items-start justify-between gap-4 mb-8 animate-fadeup">
         <div>
           <h1 className="font-serif text-3xl mb-1">Historial</h1>
@@ -131,7 +131,7 @@ export default function HistoryPage() {
         <div className="space-y-2 animate-fadeup delay-100">
           {items.map((item) => (
             <div key={item.id} className="card p-4 group hover:border-white/15 transition-all">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs text-white/30 font-mono mb-1.5 flex items-center gap-2">
                     <span>{item.sourceLang.toUpperCase()} → {item.targetLang.toUpperCase()}</span>
