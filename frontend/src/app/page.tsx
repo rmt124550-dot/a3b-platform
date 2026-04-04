@@ -4,19 +4,20 @@ import PlatformLogo from '@/components/PlatformLogos'
 import PricingSection  from '@/components/PricingSection'
 
 export const metadata: Metadata = {
-  title: 'A3B Narrator — Aprende en tu idioma en cualquier plataforma',
-  description: 'Extensión que traduce y narra subtítulos de Coursera, edX, Udemy, Udacity, DataCamp y más. Gratis. Sin APIs.',
+  title: 'A3B Narrator — Aprende en Español en Coursera, YouTube, Udemy | 36 días gratis',
+  description: 'Extensión Chrome gratuita que narra subtítulos de Coursera, YouTube, Udemy, edX, LinkedIn Learning, Khan Academy y DataCamp en español. 36 días gratis y más. Gratis. Sin APIs.',
 }
 
 const PLATFORMS = [
-  { id: 'coursera',  name: 'Coursera',   url: 'coursera.org',           badge: 'Completo', desc: 'Todos los cursos con CC' },
-  { id: 'edx',       name: 'edX',        url: 'edx.org',                badge: 'Completo', desc: 'Open edX incluido' },
-  { id: 'udemy',     name: 'Udemy',      url: 'udemy.com',              badge: 'Completo', desc: 'Todos los cursos' },
+  { id: 'coursera',      name: 'Coursera',          url: 'coursera.org',           badge: '🆓 Trial', desc: 'Todos los cursos con CC' },
+  { id: 'edx',       name: 'edX',        url: 'edx.org',                badge: '⭐ PRO', desc: 'Open edX incluido' },
+  { id: 'udemy',     name: 'Udemy',      url: 'udemy.com',              badge: '⭐ PRO', desc: 'Todos los cursos' },
   { id: 'udacity',   name: 'Udacity',    url: 'udacity.com',            badge: 'Completo', desc: 'Nano-degrees y cursos' },
-  { id: 'datacamp',  name: 'DataCamp',   url: 'datacamp.com',           badge: 'Completo', desc: 'Campus incluido' },
+  { id: 'datacamp',  name: 'DataCamp',   url: 'datacamp.com',           badge: '⭐ PRO', desc: 'Campus incluido' },
   { id: 'codecademy',name: 'Codecademy', url: 'codecademy.com',         badge: 'Parcial',  desc: 'Solo lecciones con video' },
-  { id: 'youtube',   name: 'YouTube',    url: 'youtube.com',            badge: 'Beta',     desc: 'Videos con subtítulos CC' },
-  { id: 'linkedin',  name: 'LinkedIn',   url: 'linkedin.com/learning',  badge: 'Beta',     desc: 'LinkedIn Learning' },
+  { id: 'youtube',   name: 'YouTube',    url: 'youtube.com',            badge: '⭐ PRO',     desc: 'Videos con subtítulos CC' },
+  { id: 'khan',      name: 'Khan Academy', url: 'khanacademy.org',        badge: '⭐ PRO',   desc: 'Ejercicios y videos de matemáticas, ciencias y más.' },
+  { id: 'linkedin',  name: 'LinkedIn',   url: 'linkedin.com/learning',  badge: '⭐ PRO',     desc: 'LinkedIn Learning' },
 ]
 
 const LANGS = [
@@ -99,7 +100,7 @@ export default function HomePage() {
 
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-sm text-white/60 mb-8">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          v3.2 — 5 plataformas con soporte completo · Gratis
+          v2.5.0 — 7 plataformas · 36 días gratis
         </div>
 
         <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
@@ -111,8 +112,8 @@ export default function HomePage() {
         </h1>
 
         <p className="text-xl text-white/45 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Detecta subtítulos en inglés, los traduce y los narra en voz alta.
-          Funciona en <strong className="text-white/75">Coursera, edX, Udemy, Udacity, DataCamp</strong> y más.
+          Detecta subtítulos en inglés, los traduce y los narra en voz alta. 36 días gratis — sin tarjeta.
+          Funciona en <strong className="text-white/75">Coursera, YouTube, Udemy, edX, LinkedIn, Khan Academy, DataCamp</strong> y más.
           En tiempo real. Sin API keys.
         </p>
 
@@ -120,7 +121,7 @@ export default function HomePage() {
           <Link href="/register"
             className="w-full sm:w-auto text-white font-bold px-9 py-4 rounded-xl transition-all hover:scale-105 text-lg shadow-lg"
             style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow: '0 0 40px rgba(99,102,241,0.35)' }}>
-            Descargar extensión →
+            🎁 Empezar 36 días gratis →
           </Link>
           <a href="#demo"
             className="w-full sm:w-auto border border-white/10 hover:border-white/25 text-white/55 hover:text-white font-medium px-9 py-4 rounded-xl transition-all">
@@ -201,7 +202,7 @@ export default function HomePage() {
 
               {/* Badge plataforma */}
               <div className="absolute top-3 right-3 bg-[#6366f1]/20 border border-[#6366f1]/30 rounded-lg px-3 py-1.5 text-xs font-bold text-[#a5b4fc]">
-                ✓ Activo — Coursera
+                ✓ Activo — Coursera (trial)
               </div>
             </div>
 
@@ -298,7 +299,7 @@ export default function HomePage() {
           {/* Coming soon */}
           <div className="border border-dashed border-white/8 rounded-xl p-4 text-center">
             <span className="text-white/25 text-sm">
-              🔜 Próximamente: Khan Academy · MIT OpenCourseWare · FutureLearn · Skillshare · Pluralsight
+              🔜 Próximamente: MIT OpenCourseWare · FutureLearn · Skillshare · Pluralsight
             </span>
           </div>
         </div>
@@ -399,69 +400,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── PRICING ───────────────────────────────── */}
-      <section className="py-24 px-6 border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-black mb-4">Empieza gratis 36 días</h2>
-          <p className="text-white/40 mb-16">Free incluye Coursera. PRO desbloquea todas las plataformas — 36 días gratis, sin tarjeta.</p>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                name:'Free', price:'$0', period:'siempre',
-                border:'border-white/10', bg:'bg-white/2',
-                features:['Coursera — narración completa','Google Translate EN→ES','Overlay en pantalla','Sin historial ni diccionario'],
-                cta:'Empezar gratis', href:'/register',
-                ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
-              },
-              {
-                name:'Pro', price:'$4.99', period:'/mes',
-                border:'border-[#6366f1]/60', bg:'bg-[#6366f1]/5',
-                highlight:true,
-                badge:'🎁 36 días gratis · Sin tarjeta',
-                features:['YouTube · Udemy · edX · LinkedIn','DeepL — mayor calidad','10 idiomas destino','Historial 30 días','Diccionario personal'],
-                cta:'Probar 36 días gratis', href:'/register?plan=pro',
-                ctaStyle:'bg-[#6366f1] text-white hover:bg-[#5558e8]',
-              },
-              {
-                name:'Team', price:'$19.99', period:'/mes',
-                border:'border-white/10', bg:'bg-white/2',
-                badge:'🎁 36 días gratis · Sin tarjeta',
-                features:['Todo lo de Pro','Usuarios ilimitados','Dashboard admin','API access','Soporte prioritario'],
-                cta:'Probar 36 días gratis', href:'/register?plan=team',
-                ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
-              },
-            ].map(plan => (
-              <div key={plan.name} className={`${plan.bg} border ${plan.border} rounded-2xl p-8 relative`}>
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6366f1] text-[10px] font-black px-3 py-1 rounded-full tracking-wider">
-                    MÁS POPULAR
-                  </div>
-                )}
-                <div className="font-black text-xl mb-1">{plan.name}</div>
-                <div className="text-4xl font-black mb-2">
-                  {plan.price}<span className="text-sm font-normal text-white/35">{plan.period}</span>
-                </div>
-                {(plan as {badge?:string}).badge && (
-                  <div className="text-xs text-emerald-400 font-semibold mb-4">{(plan as {badge?:string}).badge}</div>
-                )}
-                <ul className="space-y-2.5 text-sm text-white/55 text-left mb-8">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span className="text-emerald-400 flex-shrink-0">✓</span> {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={plan.href}
-                  className={`block w-full py-3 rounded-xl text-sm font-bold text-center transition-all hover:scale-105 ${plan.ctaStyle}`}>
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
+            {/* ── PRICING ───────────────────────────────── */}
+      <section id="pricing" className="py-24 px-6 border-t border-white/5">
+        <PricingSection />
       </section>
 
-      {/* ── Afiliados CTA ─────────────────────────────── */}
+      {/* ── Afiliados{/* ── Afiliados CTA ─────────────────────────────── */}
       <section className="py-16 px-6 border-t border-white/5">
         <div className="max-w-3xl mx-auto">
           <div className="bg-emerald-500/8 border border-emerald-500/20 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-6">
@@ -492,7 +436,7 @@ export default function HomePage() {
             <Link href="/register"
               className="inline-block text-white font-bold px-10 py-4 rounded-xl text-lg transition-all hover:scale-105"
               style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', boxShadow:'0 0 40px rgba(99,102,241,0.3)' }}>
-              Descargar extensión gratis →
+              🎁 Empezar 36 días gratis →
             </Link>
             <Link href="/pricing"
               className="inline-block border border-white/10 hover:border-white/25 text-white/55 hover:text-white font-medium px-10 py-4 rounded-xl transition-all">
