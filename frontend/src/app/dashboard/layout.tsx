@@ -19,8 +19,8 @@ const PLAN_COLORS: Record<string, string> = {
   free: 'plan-free', pro: 'plan-pro', team: 'plan-team'
 }
 
-export default function DashboardLayout({user && !user.emailVerified && <VerifyEmailBanner email={user.email ?? \'\'} />}
-{ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout, isAuthenticated } = useAuthStore()
@@ -97,7 +97,14 @@ export default function DashboardLayout({user && !user.emailVerified && <VerifyE
           </div>
         </div>
       </aside>
-      <main className="flex-1 ml-60 min-h-screen">{children}</main>
+      <main className="flex-1 ml-60 min-h-screen">
+          {user && !user.emailVerified && (
+            <div className="px-8 pt-6">
+              <VerifyEmailBanner email={user.email ?? ''} />
+            </div>
+          )}
+          {children}
+        </main>
     </div>
   )
 }
