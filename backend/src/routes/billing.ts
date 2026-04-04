@@ -124,7 +124,7 @@ billingRouter.get('/plans', (_req, res) => {
     plans: [
       {
         id: 'free', name: 'Free', price: 0, currency: 'usd',
-        interval: 'forever', priceId: null,
+        interval: '36 días', priceId: null,
         features: [
           'Coursera — narración completa',
           'Google Translate EN → ES',
