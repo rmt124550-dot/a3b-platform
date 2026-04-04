@@ -25,6 +25,8 @@ env:
   DOKPLOY_COMPOSE_ID: qvQyYaNuIbH8PncF780uU
   DOKPLOY_URL: http://163.176.155.185:3000
   API_URL: https://api.a3bhub.cloud
+  GITLAB_REG: registry.a3bhub.cloud
+  GITLAB_USER: root
 
 jobs:
   # ── Detectar qué cambió ─────────────────────────────────────────────────────
