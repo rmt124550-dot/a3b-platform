@@ -34,6 +34,68 @@ function getPlanByPriceId(priceId: string): 'pro' | 'team' | null {
 }
 
 // ─── Helper: activar plan de un usuario ───────────────────────────────────────
+
+// ─── Crear referral de afiliado cuando un usuario activa PRO ─────────────────
+async function trackAffiliateReferral(userId: string, plan: string, stripeSubId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where:  { id: userId },
+      select: { affiliateCode: true },
+    })
+    if (!user?.affiliateCode) return
+
+    const affiliate = await prisma.affiliate.findUnique({
+      where: { code: user.affiliateCode },
+    })
+    if (!affiliate || affiliate.status !== 'active') return
+
+    // Verificar que no existe ya un referral para este usuario
+    const existing = await prisma.affiliateReferral.findFirst({
+      where: { referredUserId: userId },
+    })
+    if (existing) return
+
+    const commissionRate  = affiliate.commissionRate ?? 0.30
+    const planAmount      = plan.includes('annual')
+      ? (plan.includes('team') ? 199.99 : 39.99)
+      : (plan.includes('team') ? 19.99  : 4.99)
+    const commissionTotal = parseFloat((planAmount * commissionRate).toFixed(2))
+    const expiresAt       = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 12 meses
+
+    await prisma.affiliateReferral.create({
+      data: {
+        affiliateId:    affiliate.id,
+        referredUserId: userId,
+        status:         'active',
+        plan,
+        commissionTotal,
+        stripeSubId,
+        activatedAt:    new Date(),
+        expiresAt,
+      },
+    })
+
+    // Actualizar pendingAmount del afiliado
+    await prisma.affiliate.update({
+      where: { id: affiliate.id },
+      data:  {
+        totalEarned:   { increment: commissionTotal },
+        pendingAmount: { increment: commissionTotal },
+      },
+    })
+
+    logger.info({
+      event:          'AFFILIATE_REFERRAL_CREATED',
+      affiliateId:    affiliate.id,
+      referredUserId: userId,
+      plan,
+      commission:     commissionTotal,
+    })
+  } catch (err: any) {
+    logger.warn({ event: 'AFFILIATE_TRACK_ERROR', error: err.message })
+  }
+}
+
 async function activatePlan(
   userId: string,
   plan: 'pro' | 'team',
