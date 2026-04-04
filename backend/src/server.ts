@@ -296,34 +296,34 @@ setInterval(async () => {
       sendEmail({
         to: u.email,
         subject: `📊 Tu semana en A3B Narrator — ${weekCount} frases narradas`,
-        html: \`
+        html: `
           <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0a0a15;color:#e0e0e0;padding:32px;border-radius:12px;">
             <h2 style="color:#fff;margin:0 0 6px">Tu resumen semanal 📊</h2>
             <p style="color:#888;font-size:14px;margin:0 0 20px">
-              Hola\${u.name ? \`, \${u.name.split(' ')[0]}\` : ''}! Esta semana con A3B:
+              Hola\${u.name ? `, \${u.name.split(' ')[0]}` : ''}! Esta semana con A3B:
             </p>
             <div style="background:#1a1a2e;border:1px solid #2a2a4e;border-radius:8px;padding:20px;margin:0 0 20px;text-align:center;">
               <div style="font-size:42px;font-weight:900;color:#a5b4fc;">\${weekCount}</div>
               <div style="color:#888;font-size:13px;">frases narradas en español</div>
             </div>
-            \${daysLeft !== null && daysLeft <= 7 ? \`
+            \${daysLeft !== null && daysLeft <= 7 ? `
               <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:16px;margin:0 0 20px;">
                 <p style="color:#fbbf24;font-size:13px;margin:0;">
                   ⚠️ Tu trial termina en <strong>\${daysLeft} día\${daysLeft===1?'':'s'}</strong>. No pierdas el ritmo.
                 </p>
               </div>
-            \` : ''}
+            ` : ''}
             <a href="\${FRONT}/dashboard" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px;">
               Ver mi dashboard →
             </a>
-            \${daysLeft !== null && daysLeft <= 10 ? \`
+            \${daysLeft !== null && daysLeft <= 10 ? `
               <br><br>
               <a href="\${FRONT}/dashboard/billing" style="display:inline-block;border:1px solid #6366f1;color:#a5b4fc;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:13px;">
                 Activar PRO — $4.99/mes
               </a>
-            \` : ''}
+            ` : ''}
           </div>
-        \`,
+        `,
       }).catch(() => {})
     }
 
