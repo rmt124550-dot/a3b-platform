@@ -193,10 +193,9 @@ setInterval(async () => {
     const deleted = await prisma.user.deleteMany({
       where: {
         emailVerified:    false,
-        emailVerifyToken: { not: null }, // tienen token (intentaron registrarse)
+        emailVerifyToken: { not: null },
         createdAt:        { lt: cutoff },
         plan:             'free',
-        stripeSubscriptionId: null,
       }
     })
 
