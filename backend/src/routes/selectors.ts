@@ -237,29 +237,6 @@ selectorsRouter.post('/run-migration', async (req, res) => {
   }
 })
 
-// ─── POST /api/selectors/promote-admin ──────────────────────────────────────
-// ONE-SHOT: promueve un userId a role=admin. Protegido con MIGRATION_TOKEN.
-// Eliminar este endpoint después de usarlo.
-selectorsRouter.post('/promote-admin', async (req, res) => {
-  const token  = req.headers['x-migration-token'] ?? req.body?.token
-  const userId = req.body?.userId
-  if (token !== MIGRATION_TOKEN) {
-    return res.status(403).json({ error: 'Invalid token' })
-  }
-  if (!userId) return res.status(400).json({ error: 'userId required' })
-  try {
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data:  { role: 'admin' },
-      select:{ id: true, email: true, role: true },
-    })
-    logger.info({ event: 'USER_PROMOTED_ADMIN', userId: user.id, email: user.email })
-    res.json({ ok: true, user })
-  } catch (err: any) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
 
 // ─── POST /api/selectors/admin-verify-email ──────────────────────────────────
 // ONE-SHOT admin: fuerza emailVerified=true y envía welcome email
