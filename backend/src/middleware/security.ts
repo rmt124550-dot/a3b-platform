@@ -138,10 +138,15 @@ export function additionalSecurityHeaders(_req: Request, res: Response, next: Ne
 // ─── Validar Content-Type en POST/PUT/PATCH ───────────────────────────────
 
 export function requireJsonContentType(req: Request, res: Response, next: NextFunction) {
-  // OPTIONS (CORS preflight) no lleva Content-Type — siempre pasar
+  // OPTIONS (CORS preflight) — siempre pasar
   if (req.method === 'OPTIONS') return next()
+  // Webhook — body es Buffer, ya validado por Stripe — siempre pasar
+  if (Buffer.isBuffer(req.body)) return next()
   if (['POST','PUT','PATCH'].includes(req.method)) {
-    const ct = req.headers['content-type'] ?? ''
+    const ct          = req.headers['content-type'] ?? ''
+    const contentLen  = parseInt(req.headers['content-length'] ?? '0', 10)
+    // Permitir POST sin body (ej: /billing/portal no requiere payload)
+    if (contentLen === 0 || !req.headers['content-length']) return next()
     if (!ct.includes('application/json') && !ct.includes('multipart/form-data')) {
       return res.status(415).json({ error: 'Content-Type must be application/json' })
     }
