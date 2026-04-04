@@ -185,20 +185,22 @@ userRouter.post('/reset-password', validate(resetSchema), async (req, res, next)
 // ─── GET /api/user/config ── obtener config cloud de la extensión ──────────────
 userRouter.get('/config', authenticate, async (req, res, next) => {
   try {
-    const user = await prisma.user.findUnique({
-      where:  { id: req.user!.id },
-      select: { extensionConfig: true },
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId: req.user!.id },
     })
+    if (!settings) return res.json({ config: {} })
 
-    // extensionConfig puede no existir en el schema aún — manejo defensivo
-    const config = (user as any)?.extensionConfig
-      ? JSON.parse((user as any).extensionConfig)
-      : {}
-
-    res.json({ config })
-  } catch (err) {
-    next(err)
-  }
+    res.json({
+      config: {
+        speed:        settings.voiceSpeed,
+        volume:       Math.round(settings.voiceVolume * 100),
+        pitch:        settings.voicePitch,
+        voiceName:    settings.voiceName ?? '',
+        showSubtitles:settings.showOverlay,
+        targetLang:   settings.targetLang,
+      }
+    })
+  } catch (err) { next(err) }
 })
 
 // ─── PUT /api/user/config ── guardar config cloud de la extensión ──────────────
@@ -209,25 +211,20 @@ userRouter.put('/config', authenticate, async (req, res, next) => {
       return res.status(400).json({ error: 'config debe ser un objeto' })
     }
 
-    // Whitelist de campos permitidos
-    const allowed = ['speed','volume','pitch','voiceName','showSubtitles','targetLang']
-    const sanitized: Record<string, unknown> = {}
-    for (const key of allowed) {
-      if (config[key] !== undefined) sanitized[key] = config[key]
-    }
+    const data: any = {}
+    if (config.speed        !== undefined) data.voiceSpeed  = Number(config.speed)
+    if (config.volume       !== undefined) data.voiceVolume = Number(config.volume) / 100
+    if (config.pitch        !== undefined) data.voicePitch  = Number(config.pitch)
+    if (config.voiceName    !== undefined) data.voiceName   = String(config.voiceName)
+    if (config.showSubtitles !== undefined) data.showOverlay = Boolean(config.showSubtitles)
+    if (config.targetLang   !== undefined) data.targetLang  = String(config.targetLang)
 
-    await (prisma.user as any).update({
-      where: { id: req.user!.id },
-      data:  { extensionConfig: JSON.stringify(sanitized) },
+    await prisma.userSettings.upsert({
+      where:  { userId: req.user!.id },
+      create: { userId: req.user!.id, ...data },
+      update: data,
     })
 
-    res.json({ ok: true, config: sanitized })
-  } catch (err: any) {
-    // Si el campo no existe en el schema de Prisma, devolver config vacía sin crash
-    if (err.code === 'P2025' || err.message?.includes('extensionConfig')) {
-      res.json({ ok: true, config: req.body?.config ?? {} })
-    } else {
-      next(err)
-    }
-  }
+    res.json({ ok: true, config })
+  } catch (err) { next(err) }
 })
