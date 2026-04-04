@@ -292,3 +292,15 @@ export async function sendCancellationEmail(to: string, name: string, endDate: s
     throw err
   }
 }
+// ─── Función genérica ────────────────────────────────────────────────────────
+export async function sendEmail({ to, subject, html }: {
+  to: string; subject: string; html: string
+}) {
+  return resend.emails.send({
+    from:    FROM,
+    to:      [to],
+    subject,
+    html,
+  })
+}
+
