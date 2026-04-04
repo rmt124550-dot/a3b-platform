@@ -65,7 +65,7 @@ const TESTIMONIALS = [
 
 // ─── Pricing Section con toggle mensual/anual ─────────────────────────────────
 function PricingSection() {
-  const [billing, setBilling] = React.useState<'monthly'|'annual'>('monthly')
+  const [billing, setBilling] = useState<'monthly'|'annual'>('monthly')
 
   const plans = [
     {
