@@ -13,6 +13,7 @@ const NAV = [
   { href: '/dashboard/dictionary', icon: '◉', label: 'Diccionario' },
   { href: '/dashboard/settings',   icon: '◎', label: 'Ajustes' },
   { href: '/dashboard/billing',    icon: '◇', label: 'Facturación' },
+  { href: '/help',                  icon: '❓', label: 'Ayuda' },
 ]
 
 const PLAN_COLORS: Record<string, string> = {
