@@ -162,3 +162,61 @@ model PlatformSelector {
 
   @@map("platform_selectors")
 }
+
+// ─── Programa de Afiliados ────────────────────────────────────────────────────
+model Affiliate {
+  id              String    @id @default(cuid())
+  userId          String    @unique @map("user_id")
+  code            String    @unique              // slug único ej: "juandev"
+  status          String    @default("active")   // active | suspended | pending
+  commissionRate  Float     @default(0.30)       @map("commission_rate")
+  totalEarned     Float     @default(0)          @map("total_earned")
+  totalPaid       Float     @default(0)          @map("total_paid")
+  pendingAmount   Float     @default(0)          @map("pending_amount")
+  paypalEmail     String?   @map("paypal_email")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt      @map("updated_at")
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referrals       AffiliateReferral[]
+  payouts         AffiliatePayout[]
+
+  @@map("affiliates")
+}
+
+model AffiliateReferral {
+  id              String    @id @default(cuid())
+  affiliateId     String    @map("affiliate_id")
+  referredUserId  String    @map("referred_user_id")
+  status          String    @default("pending")  // pending | active | cancelled
+  plan            String                         // pro | team | pro_annual | team_annual
+  commissionTotal Float     @default(0)  @map("commission_total")
+  commissionPaid  Float     @default(0)  @map("commission_paid")
+  monthsTracked   Int       @default(0)  @map("months_tracked")
+  stripeSubId     String?   @map("stripe_sub_id")
+  activatedAt     DateTime? @map("activated_at")
+  expiresAt       DateTime? @map("expires_at")   // activatedAt + 12 meses
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  affiliate       Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  referredUser    User      @relation("ReferredByAffiliate", fields: [referredUserId], references: [id])
+
+  @@map("affiliate_referrals")
+}
+
+model AffiliatePayout {
+  id           String   @id @default(cuid())
+  affiliateId  String   @map("affiliate_id")
+  amount       Float
+  method       String   @default("paypal")   // paypal | transfer
+  status       String   @default("pending")  // pending | paid | failed
+  reference    String?                       // PayPal transaction ID
+  paidAt       DateTime? @map("paid_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  affiliate    Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@map("affiliate_payouts")
+}
+
