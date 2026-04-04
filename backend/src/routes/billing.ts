@@ -18,10 +18,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
 })
 
 const PLANS: Record<string, { priceId: string; interval: string; amount: number }> = {
-  pro:        { priceId: process.env.STRIPE_PRICE_PRO        ?? 'price_1TIEIsFX0egoW0Gac5GHffeH',  interval: 'month', amount: 499  },
-  team:       { priceId: process.env.STRIPE_PRICE_TEAM       ?? 'price_1TIEItFX0egoW0Ga4kYmzffC', interval: 'month', amount: 1999 },
-  pro_annual: { priceId: process.env.STRIPE_PRICE_PRO_ANNUAL ?? 'price_1TIZCxFX0egoW0Ga9tYg629o',   interval: 'year',  amount: 3999 },
-  team_annual:{ priceId: process.env.STRIPE_PRICE_TEAM_ANNUAL?? 'price_1TIZCxFX0egoW0GaYrB7tFZX',  interval: 'year',  amount: 19999},
+  pro:         { priceId: process.env.STRIPE_PRICE_PRO         ?? 'price_1TIEIsFX0egoW0Gac5GHffeH', interval: 'month', amount: 499   },
+  team:        { priceId: process.env.STRIPE_PRICE_TEAM        ?? 'price_1TIEItFX0egoW0Ga4kYmzffC', interval: 'month', amount: 1999  },
+  pro_annual:  { priceId: process.env.STRIPE_PRICE_PRO_ANNUAL  ?? 'price_1TIZCxFX0egoW0Ga9tYg629o', interval: 'year',  amount: 3999  },
+  team_annual: { priceId: process.env.STRIPE_PRICE_TEAM_ANNUAL ?? 'price_1TIZCxFX0egoW0GaYrB7tFZX', interval: 'year',  amount: 19999 },
 },
   team: { priceId: process.env.STRIPE_PRICE_TEAM_MONTHLY ?? '', name: 'Team' },
 }
