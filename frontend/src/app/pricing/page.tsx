@@ -1,195 +1,290 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import toast from 'react-hot-toast'
-import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth-store'
+import { api } from '@/lib/api'
+import toast from 'react-hot-toast'
 
 const PLANS = [
   {
-    id: 'free', name: 'Free', price: 0, period: '',
-    color: 'border-white/8',
+    id: 'free',
+    name: 'Free',
+    monthly: 0, annual: 0,
+    monthlyId: null, annualId: null,
+    period: 'para siempre',
+    badge: null,
+    highlight: false,
     features: [
-      { text: 'Google Text-to-Speech', ok: true },
-      { text: 'Traducción EN → ES', ok: true },
-      { text: 'Compatible con Coursera', ok: true },
-      { text: 'Historial de traducciones', ok: false },
-      { text: 'Diccionario personal', ok: false },
-      { text: 'DeepL (calidad superior)', ok: false },
-      { text: 'Múltiples idiomas', ok: false },
+      '✅ Coursera — narración completa',
+      '✅ Google Translate EN → ES',
+      '✅ Voz nativa del navegador',
+      '✅ Overlay en pantalla',
+      '✅ Kiwi Browser + Firefox Android',
+      '❌ Solo Coursera en desktop',
+      '❌ Sin historial ni diccionario',
     ],
     cta: 'Empezar gratis',
+    ctaHref: '/register',
+    ctaStyle: 'border border-white/12 text-white/70 hover:border-white/30 hover:text-white',
   },
   {
-    id: 'pro', name: 'Pro', price: 4.99, period: '/mes',
-    color: 'border-indigo', highlight: true,
-    badge: 'Más popular',
+    id: 'pro',
+    name: 'Pro',
+    monthly: 4.99, annual: 39.99,
+    monthlyId: 'pro', annualId: 'pro_annual',
+    period: '/mes',
+    badge: '⭐ MÁS POPULAR',
+    highlight: true,
+    annualBadge: '🔥 2 meses gratis',
+    savings: '33%',
     features: [
-      { text: 'DeepL (calidad superior)', ok: true },
-      { text: '10 idiomas destino', ok: true },
-      { text: 'Coursera + YouTube + Udemy', ok: true },
-      { text: 'Historial 30 días', ok: true },
-      { text: 'Diccionario personal', ok: true },
-      { text: '7 días de prueba gratis', ok: true },
-      { text: 'Admin dashboard', ok: false },
+      '✅ Todo lo de Free',
+      '✅ YouTube · Udemy · edX · LinkedIn',
+      '✅ DeepL — traducción de alta calidad',
+      '✅ 10 idiomas de destino',
+      '✅ Historial de frases (30 días)',
+      '✅ Diccionario personal técnico',
+      '✅ Sync config en la nube',
     ],
-    cta: 'Empezar prueba gratis',
+    cta: 'Probar 7 días gratis',
+    ctaStyle: 'bg-[#6366f1] text-white hover:bg-[#5558e8]',
   },
   {
-    id: 'team', name: 'Team', price: 19.99, period: '/mes',
-    color: 'border-white/8',
+    id: 'team',
+    name: 'Team',
+    monthly: 19.99, annual: 199.99,
+    monthlyId: 'team', annualId: 'team_annual',
+    period: '/mes',
+    badge: null,
+    highlight: false,
+    annualBadge: '💎 2 meses gratis',
+    savings: '17%',
     features: [
-      { text: 'Todo lo de PRO', ok: true },
-      { text: 'Usuarios ilimitados', ok: true },
-      { text: 'Admin dashboard', ok: true },
-      { text: 'API access', ok: true },
-      { text: 'Exportar SRT', ok: true },
-      { text: 'Soporte prioritario', ok: true },
-      { text: '7 días de prueba gratis', ok: true },
+      '✅ Todo lo de Pro',
+      '✅ Usuarios ilimitados',
+      '✅ Dashboard de administración',
+      '✅ API access completo',
+      '✅ Soporte prioritario',
+      '✅ Exportar subtítulos .SRT',
+      '✅ Informes de uso del equipo',
     ],
-    cta: 'Empezar prueba gratis',
+    cta: 'Probar 7 días gratis',
+    ctaStyle: 'border border-white/12 text-white/70 hover:border-white/30 hover:text-white',
   },
 ]
 
 export default function PricingPage() {
-  const router = useRouter()
-  const { user, isAuthenticated } = useAuthStore()
-  const [loading, setLoading] = useState<string | null>(null)
+  const [billing, setBilling] = useState<'monthly'|'annual'>('monthly')
+  const [loading, setLoading]  = useState<string|null>(null)
+  const { isAuthenticated }    = useAuthStore()
 
-  async function handleSelect(planId: string) {
-    if (planId === 'free') {
-      router.push(isAuthenticated() ? '/dashboard' : '/register')
-      return
-    }
-    if (!isAuthenticated()) {
-      router.push(`/register?plan=${planId}`)
-      return
-    }
+  async function handleCheckout(plan: typeof PLANS[0]) {
+    const planId = billing === 'annual' ? plan.annualId : plan.monthlyId
+    if (!planId) return
+
     setLoading(planId)
     try {
+      if (!isAuthenticated()) {
+        window.location.href = `/register?plan=${planId}`
+        return
+      }
       const { data } = await api.post('/api/billing/checkout', { plan: planId })
       window.location.href = data.url
     } catch {
-      toast.error('Error al iniciar el pago')
+      toast.error('Error al iniciar el checkout. Inténtalo de nuevo.')
     } finally {
       setLoading(null)
     }
   }
 
+  const annualSavings = billing === 'annual'
+
   return (
-    <div className="min-h-screen bg-surface grain relative">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-indigo/6 rounded-full blur-[150px] pointer-events-none" />
+    <main className="min-h-screen bg-[#080810] text-white px-6 py-20">
+      <div className="max-w-5xl mx-auto">
 
-      {/* Nav */}
-      <nav className="border-b border-white/5 backdrop-blur-md bg-surface/80 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <span>🔊</span> A3B<span className="text-indigo"> Narrator</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            {isAuthenticated() ? (
-              <Link href="/dashboard" className="btn-ghost text-sm">Dashboard</Link>
-            ) : (
-              <>
-                <Link href="/login" className="btn-ghost text-sm">Iniciar sesión</Link>
-                <Link href="/register" className="btn-primary text-sm">Empezar gratis</Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      <main className="max-w-5xl mx-auto px-6 py-24 relative z-10">
         {/* Header */}
-        <div className="text-center mb-16 animate-fadeup">
-          <div className="inline-flex items-center gap-2 badge badge-indigo mb-6">
-            ✦ Precios simples
-          </div>
-          <h1 className="font-serif text-5xl md:text-6xl mb-4">
-            Elige tu plan
-          </h1>
-          <p className="text-white/50 text-lg max-w-md mx-auto">
-            Empieza gratis. Actualiza cuando necesites más potencia.
+        <div className="text-center mb-12">
+          <Link href="/" className="text-white/30 hover:text-white/60 text-sm mb-6 block">← Volver al inicio</Link>
+          <h1 className="text-4xl font-black mb-3">Precios simples y honestos</h1>
+          <p className="text-white/40 text-sm mb-8">
+            Prueba PRO y Team 7 días gratis — sin tarjeta requerida
           </p>
+
+          {/* Toggle mensual / anual */}
+          <div className="inline-flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+            <button
+              onClick={() => setBilling('monthly')}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+                billing === 'monthly'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/40 hover:text-white/70'
+              }`}>
+              Mensual
+            </button>
+            <button
+              onClick={() => setBilling('annual')}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
+                billing === 'annual'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/40 hover:text-white/70'
+              }`}>
+              Anual
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded-full font-bold">
+                -33%
+              </span>
+            </button>
+          </div>
         </div>
 
-        {/* Plans grid */}
-        <div className="grid md:grid-cols-3 gap-5 animate-fadeup delay-100">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.id}
-              className={`border rounded-2xl p-7 flex flex-col relative transition-all duration-300 ${
-                plan.highlight
-                  ? 'bg-indigo/5 border-indigo shadow-[0_0_60px_rgba(99,102,241,0.12)]'
-                  : 'bg-s1 border-white/8 hover:border-white/16'
-              }`}
-            >
-              {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-wider uppercase">
-                  {plan.badge}
-                </div>
-              )}
+        {/* Planes */}
+        <div className="grid md:grid-cols-3 gap-6 mb-16">
+          {PLANS.map(plan => {
+            const price    = billing === 'annual' && plan.annual > 0 ? plan.annual : plan.monthly
+            const perMonth = billing === 'annual' && plan.annual > 0 ? (plan.annual/12).toFixed(2) : null
+            const planId   = billing === 'annual' ? plan.annualId : plan.monthlyId
+            const isLoading= loading === planId
 
-              <div className="mb-6">
-                <div className={`text-xs font-bold uppercase tracking-widest mb-3 ${plan.highlight ? 'text-indigo' : 'text-white/40'}`}>
-                  {plan.name}
-                </div>
-                <div className="flex items-end gap-1">
-                  <span className="font-serif text-4xl">${plan.price}</span>
-                  <span className="text-white/40 text-sm mb-1">{plan.period}</span>
-                </div>
-              </div>
-
-              <ul className="space-y-3 mb-8 flex-1">
-                {plan.features.map((f) => (
-                  <li key={f.text} className={`flex items-start gap-2.5 text-sm ${f.ok ? 'text-white/80' : 'text-white/25 line-through'}`}>
-                    <span className={`mt-0.5 text-base leading-none flex-shrink-0 ${f.ok ? 'text-emerald' : 'text-white/15'}`}>
-                      {f.ok ? '✓' : '×'}
-                    </span>
-                    {f.text}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => handleSelect(plan.id)}
-                disabled={loading === plan.id || (user?.plan === plan.id)}
-                className={`w-full h-11 rounded-xl font-semibold text-sm transition-all ${
+            return (
+              <div key={plan.id}
+                className={`relative rounded-2xl border p-8 flex flex-col ${
                   plan.highlight
-                    ? 'btn-primary'
-                    : 'btn-ghost'
-                } ${user?.plan === plan.id ? 'opacity-40 cursor-default' : ''}`}
-              >
-                {loading === plan.id ? (
-                  <svg className="animate-spin w-4 h-4 mx-auto" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
-                  </svg>
-                ) : user?.plan === plan.id ? 'Plan actual ✓' : plan.cta}
-              </button>
-            </div>
-          ))}
+                    ? 'border-[#6366f1]/60 bg-[#6366f1]/5'
+                    : 'border-white/8 bg-white/2'
+                }`}>
+
+                {/* Badge superior */}
+                {plan.badge && (
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#6366f1] text-[10px] font-black tracking-widest text-white px-3 py-1 rounded-full whitespace-nowrap">
+                    {plan.badge}
+                  </div>
+                )}
+
+                <div className="font-black text-xl mb-3">{plan.name}</div>
+
+                {/* Precio */}
+                <div className="mb-1">
+                  {plan.monthly === 0 ? (
+                    <span className="text-4xl font-black">$0</span>
+                  ) : (
+                    <>
+                      <span className="text-4xl font-black">${price}</span>
+                      <span className="text-white/35 text-sm font-normal">
+                        {billing === 'annual' ? '/año' : plan.period}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* Equivalente mensual y ahorro */}
+                {billing === 'annual' && perMonth && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-emerald-400 text-xs font-semibold">
+                      ${perMonth}/mes
+                    </span>
+                    <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 px-1.5 py-0.5 rounded-full font-bold">
+                      {plan.savings && `Ahorras ${plan.savings}`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Badge anual */}
+                {billing === 'annual' && plan.annualBadge && plan.monthly > 0 && (
+                  <div className="text-xs text-amber-400/80 font-semibold mb-4">
+                    {plan.annualBadge}
+                  </div>
+                )}
+
+                {/* Separador */}
+                {!(billing === 'annual' && perMonth) && <div className="mb-5" />}
+
+                {/* Features */}
+                <ul className="space-y-2 text-sm mb-8 flex-1">
+                  {plan.features.map(f => (
+                    <li key={f} className={`flex items-start gap-2 ${
+                      f.startsWith('❌') ? 'text-white/25' : 'text-white/60'
+                    }`}>
+                      <span className="flex-shrink-0 mt-0.5 text-xs">{f.slice(0,2)}</span>
+                      <span>{f.slice(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                {plan.id === 'free' ? (
+                  <Link href={plan.ctaHref}
+                    className={`block w-full py-3 rounded-xl text-sm font-bold text-center transition-all ${plan.ctaStyle}`}>
+                    {plan.cta}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => handleCheckout(plan)}
+                    disabled={isLoading}
+                    className={`w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-60 ${plan.ctaStyle}`}>
+                    {isLoading ? '⏳ Redirigiendo...' : plan.cta}
+                  </button>
+                )}
+
+                {plan.id !== 'free' && (
+                  <p className="text-center text-white/25 text-xs mt-3">
+                    7 días gratis · Sin tarjeta · Cancela cuando quieras
+                  </p>
+                )}
+              </div>
+            )
+          })}
         </div>
 
-        {/* FAQ */}
-        <div className="mt-20 max-w-2xl mx-auto animate-fadeup delay-200">
-          <h2 className="font-serif text-2xl text-center mb-10">Preguntas frecuentes</h2>
-          <div className="space-y-4">
+        {/* Comparativa */}
+        <div className="bg-white/2 border border-white/8 rounded-2xl p-8 mb-12">
+          <h2 className="font-black text-lg mb-6 text-center">¿Por qué elegir el plan anual?</h2>
+          <div className="grid sm:grid-cols-3 gap-6 text-center">
             {[
-              { q: '¿Puedo cancelar en cualquier momento?', a: 'Sí. Puedes cancelar desde tu dashboard. No hay penalizaciones ni contratos.' },
-              { q: '¿Qué pasa con mis datos si cancelo?', a: 'Tu historial y diccionario se conservan 30 días después de cancelar.' },
-              { q: '¿La prueba gratuita requiere tarjeta?', a: 'Sí, necesitamos una tarjeta para la prueba. No se realiza ningún cargo durante 7 días.' },
-              { q: '¿Funciona en todos los navegadores?', a: 'Chrome, Edge, Firefox y Kiwi Browser (Android). También disponible como bookmarklet.' },
-            ].map((item) => (
-              <div key={item.q} className="card p-5">
-                <div className="font-semibold text-sm mb-2">{item.q}</div>
-                <div className="text-sm text-white/50 leading-relaxed">{item.a}</div>
+              { icon: '💰', title: 'Ahorras $19.89', desc: 'El equivalente a 2 meses gratis en PRO' },
+              { icon: '🔒', title: 'Precio garantizado', desc: 'Bloqueas el precio actual por 12 meses' },
+              { icon: '🧘', title: 'Sin preocupaciones', desc: 'Una sola factura al año, sin cargos mensuales' },
+            ].map(item => (
+              <div key={item.title}>
+                <div className="text-3xl mb-2">{item.icon}</div>
+                <div className="font-bold text-sm mb-1">{item.title}</div>
+                <div className="text-white/40 text-xs">{item.desc}</div>
               </div>
             ))}
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* FAQ */}
+        <div className="max-w-2xl mx-auto">
+          <h2 className="font-black text-lg mb-6 text-center">Preguntas frecuentes</h2>
+          <div className="space-y-3">
+            {[
+              { q: '¿Necesito tarjeta para el trial?', a: 'No. Puedes probar PRO y Team durante 7 días completamente gratis sin ingresar ningún método de pago.' },
+              { q: '¿Qué pasa al terminar el trial?', a: 'Si no agregas una tarjeta, vuelves automáticamente al plan Free. Si la agregas, se cobra al día 8.' },
+              { q: '¿Puedo cambiar de plan anual a mensual?', a: 'Sí. Puedes cambiar desde Dashboard → Facturación en cualquier momento. El cambio aplica al siguiente período.' },
+              { q: '¿Hay reembolsos?', a: 'No realizamos reembolsos por períodos parciales, salvo casos excepcionales a nuestra discreción. Puedes cancelar en cualquier momento.' },
+              { q: '¿El plan Free tiene límites de uso?', a: 'No. El plan Free en Coursera es completamente ilimitado. Sin límite de narración, sin anuncios.' },
+            ].map((faq, i) => (
+              <details key={i} className="bg-white/3 border border-white/8 rounded-xl overflow-hidden group">
+                <summary className="flex justify-between items-center px-5 py-4 cursor-pointer list-none hover:bg-white/3">
+                  <span className="text-sm font-medium">{faq.q}</span>
+                  <span className="text-white/30 group-open:rotate-180 transition-transform text-xs flex-shrink-0 ml-2">▼</span>
+                </summary>
+                <div className="px-5 pb-4 pt-1 text-white/50 text-sm">{faq.a}</div>
+              </details>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer de la página */}
+        <div className="text-center mt-12 text-white/20 text-xs">
+          <p>¿Tienes preguntas? <a href="mailto:hello@a3bhub.cloud" className="hover:text-white/50 underline">hello@a3bhub.cloud</a></p>
+          <div className="flex justify-center gap-4 mt-3">
+            <Link href="/privacy" className="hover:text-white/40">Privacidad</Link>
+            <Link href="/terms" className="hover:text-white/40">Términos</Link>
+            <Link href="/help" className="hover:text-white/40">Ayuda</Link>
+          </div>
+        </div>
+      </div>
+    </main>
   )
 }
