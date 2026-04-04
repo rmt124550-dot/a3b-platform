@@ -114,7 +114,7 @@ export default function PricingPage() {
                 {plan.price === 0 ? (
                   <div className="mb-6">
                     <span className="text-4xl font-black">$0</span>
-                    <span className="text-white/35 text-sm ml-1">para siempre</span>
+                    <span className="text-white/35 text-sm ml-1">/36 días</span>
                   </div>
                 ) : (
                   <div className="mb-2">
@@ -226,13 +226,13 @@ export default function PricingPage() {
               { q: '¿Necesito tarjeta para el trial?',
                 a: 'No. 36 días completamente gratis sin ningún método de pago.' },
               { q: '¿Qué pasa al terminar el trial?',
-                a: 'Si no agregas tarjeta, vuelves al plan Free automáticamente. Sin cargos.' },
+                a: 'Si no agregas tarjeta, el acceso se suspende al día 36. Puedes activar PRO en cualquier momento.' },
               { q: '¿Puedo cambiar de plan anual a mensual?',
                 a: 'Sí, desde Dashboard → Facturación. El cambio aplica al siguiente período.' },
               { q: '¿El plan anual incluye el trial?',
                 a: 'Sí. El plan anual también incluye 36 días gratis sin tarjeta.' },
-              { q: '¿El plan Free tiene límites de uso?',
-                a: 'No. Coursera es completamente ilimitado en el plan Free. Sin anuncios.' },
+              { q: '¿Qué pasa después del trial?',
+                a: 'Al terminar los 36 días necesitas activar PRO ($4.99/mes) para seguir usando la extensión.' },
             ].map((faq, i) => (
               <details key={i} className="bg-white/3 border border-white/8 rounded-xl overflow-hidden group">
                 <summary className="flex justify-between items-center px-5 py-4 cursor-pointer list-none hover:bg-white/3">
