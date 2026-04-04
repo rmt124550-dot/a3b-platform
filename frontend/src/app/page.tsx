@@ -516,6 +516,12 @@ export default function HomePage() {
                 Términos de Uso
               </Link>
               <a
+                href="https://github.com/rmt124550-dot/a3b-platform/blob/main/LICENSE"
+                target="_blank" rel="noopener noreferrer"
+                className="hover:text-white/50 transition-colors">
+                Licencia SSPL
+              </a>
+              <a
                 href="https://github.com/rmt124550-dot/a3b-coursera-voice-narrator/blob/main/LICENSE"
                 target="_blank" rel="noopener noreferrer"
                 className="hover:text-white/50 transition-colors">
