@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Fondo redondeado oscuro -->
+  <rect width="32" height="32" rx="8" fill="#080810"/>
+
+  <!-- Speaker body -->
+  <path d="M8 12h4l5-4v16l-5-4H8z" fill="#6366f1"/>
+
+  <!-- Sound waves -->
+  <path d="M19 11.5a6 6 0 0 1 0 9" stroke="#a855f7" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M21 9a9.5 9.5 0 0 1 0 14" stroke="#6366f1" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>
