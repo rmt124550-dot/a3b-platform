@@ -402,7 +402,7 @@ export default function HomePage() {
       {/* ── PRICING ───────────────────────────────── */}
       <section className="py-24 px-6 border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-black mb-4">Empieza gratis</h2>
+          <h2 className="text-3xl font-black mb-4">Empieza gratis 36 días</h2>
           <p className="text-white/40 mb-16">Free incluye Coursera. PRO desbloquea todas las plataformas — 36 días gratis, sin tarjeta.</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
