@@ -5,7 +5,7 @@ import { z }       from 'zod'
 import { prisma }  from '../utils/prisma'
 import { redis }   from '../utils/redis'
 import { logger, securityLog, auditLog } from '../utils/logger'
-import { sendWelcomeEmail }  from '../services/email'
+import { sendVerificationEmail, sendWelcomeEmail } from '../services/email'
 import { validate }          from '../middleware/validate'
 import { authenticate }      from '../middleware/authenticate'
 import { authLimiter }       from '../middleware/security'
@@ -75,16 +75,22 @@ authRouter.post('/register', authLimiter, validate(registerSchema), async (req, 
     }
 
     const passwordHash = await bcrypt.hash(password, 12)
+    // Generar token de verificación de email (hex aleatorio, expira en 24h)
+    const crypto = await import('crypto')
+    const verifyToken = crypto.randomBytes(32).toString('hex')
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
         passwordHash,
+        emailVerifyToken: verifyToken,
+        emailVerified:    false,
         settings: { create: {} },
       },
       select: {
         id: true, email: true, name: true,
-        plan: true, role: true,
+        plan: true, role: true, emailVerified: true,
       },
     })
 
@@ -92,11 +98,19 @@ authRouter.post('/register', authLimiter, validate(registerSchema), async (req, 
     await redis.setex(`refresh:${user.id}:${refreshToken}`, 7 * 24 * 60 * 60, '1')
 
     auditLog('USER_REGISTERED', user.id, { email: user.email, ip: req.ip })
-    sendWelcomeEmail(user.email, user.name ?? 'there').catch(err =>
-      logger.error({ event: 'WELCOME_EMAIL_FAILED', error: err.message })
+
+    // Enviar email de verificación (no welcome — el welcome se envía al verificar)
+    sendVerificationEmail(user.email, user.name ?? 'there', verifyToken).catch(err =>
+      logger.error({ event: 'VERIFY_EMAIL_FAILED', error: err.message })
     )
 
-    res.status(201).json({ user, accessToken, refreshToken })
+    res.status(201).json({
+      user,
+      accessToken,
+      refreshToken,
+      emailVerified: false,
+      message: 'Account created. Please check your email to verify your account.',
+    })
   } catch (err) {
     next(err)
   }
@@ -257,3 +271,81 @@ authRouter.patch('/password', authenticate, validate(changePasswordSchema), asyn
     next(err)
   }
 })
+
+// ─── GET /api/auth/verify-email ───────────────────────────────────────────
+// Verifica el email del usuario via token en URL
+authRouter.get('/verify-email', async (req, res, next) => {
+  try {
+    const { token } = req.query
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'Token de verificación requerido.' })
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { emailVerifyToken: token, emailVerified: false },
+    })
+
+    if (!user) {
+      return res.status(400).json({
+        error: 'Token inválido o ya utilizado.',
+        code:  'INVALID_TOKEN',
+      })
+    }
+
+    // Marcar email como verificado
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified:    true,
+        emailVerifyToken: null,
+      },
+    })
+
+    // Invalidar caché del usuario
+    await redis.del(`user_cache:${user.id}`)
+
+    // Enviar email de bienvenida ahora que está verificado
+    sendWelcomeEmail(user.email, user.name ?? 'there').catch(() => {})
+
+    auditLog('EMAIL_VERIFIED', user.id, { email: user.email })
+    res.json({
+      ok: true,
+      message: '¡Email verificado correctamente! Ya puedes usar todas las funciones.',
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─── POST /api/auth/resend-verification ──────────────────────────────────
+// Reenvía el email de verificación
+authRouter.post('/resend-verification', authLimiter, authenticate, async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where:  { id: req.user!.id },
+      select: { id: true, email: true, name: true, emailVerified: true },
+    })
+
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' })
+    if (user.emailVerified) {
+      return res.status(400).json({ error: 'Tu email ya está verificado.', code: 'ALREADY_VERIFIED' })
+    }
+
+    // Generar nuevo token
+    const crypto = await import('crypto')
+    const newToken = crypto.randomBytes(32).toString('hex')
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data:  { emailVerifyToken: newToken },
+    })
+
+    sendVerificationEmail(user.email, user.name ?? 'there', newToken).catch(() => {})
+
+    auditLog('VERIFICATION_RESENT', user.id, { ip: req.ip })
+    res.json({ ok: true, message: 'Email de verificación reenviado. Revisa tu bandeja de entrada.' })
+  } catch (err) {
+    next(err)
+  }
+})
+
