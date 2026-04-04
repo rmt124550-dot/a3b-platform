@@ -35,6 +35,7 @@ model User {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
   lastLoginAt        DateTime? @map("last_login_at")
+  affiliateCode      String?   @map("affiliate_code")  // código del afiliado que lo refirió
   deletedAt          DateTime? @map("deleted_at")
 
   subscriptions Subscription[]
@@ -43,6 +44,9 @@ model User {
   dictionary    UserDictionary[]
   settings      UserSettings?
   usageLogs     UsageLog[]
+
+  affiliate          Affiliate?
+  referredAs         AffiliateReferral[] @relation("ReferredByAffiliate")
 
   @@map("users")
 }
