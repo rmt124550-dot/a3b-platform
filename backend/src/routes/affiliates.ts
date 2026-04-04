@@ -156,7 +156,7 @@ affiliatesRouter.post('/:id/payout',
       const { amount, method, reference } = req.body
 
       const [payout, aff] = await prisma.$transaction([
-        prisma.affilePayout.create({
+        prisma.affiliatePayout.create({
           data: {
             affiliateId: id, amount, method, status: 'paid',
             reference, paidAt: new Date(),
