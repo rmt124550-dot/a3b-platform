@@ -184,3 +184,27 @@ app.listen(PORT, () => {
 
 export default app
 
+// ─── Job de limpieza automática (cada 24h) ────────────────────────────────────
+setInterval(async () => {
+  try {
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 días
+
+    // Eliminar usuarios que nunca verificaron su email tras 7 días
+    const deleted = await prisma.user.deleteMany({
+      where: {
+        emailVerified:    false,
+        emailVerifyToken: { not: null }, // tienen token (intentaron registrarse)
+        createdAt:        { lt: cutoff },
+        plan:             'free',
+        stripeSubscriptionId: null,
+      }
+    })
+
+    if (deleted.count > 0) {
+      logger.info({ event: 'CLEANUP_UNVERIFIED_USERS', count: deleted.count })
+    }
+  } catch (err: any) {
+    logger.warn({ event: 'CLEANUP_JOB_ERROR', error: err.message })
+  }
+}, 24 * 60 * 60 * 1000) // cada 24 horas
+
