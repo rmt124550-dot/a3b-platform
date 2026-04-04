@@ -8,6 +8,10 @@ export interface User {
   name: string | null
   avatarUrl: string | null
   plan: 'free' | 'pro' | 'team'
+  trialEndsAt?: string | null
+  trialExpired?: boolean
+  trialDaysLeft?: number | null
+  isActive?: boolean
   role: string
   emailVerified?: boolean
 }
