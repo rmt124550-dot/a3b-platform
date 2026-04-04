@@ -14,6 +14,7 @@ const NAV = [
   { href: '/dashboard/settings',   icon: '◎', label: 'Ajustes' },
   { href: '/dashboard/billing',    icon: '◇', label: 'Facturación' },
   { href: '/help',                  icon: '❓', label: 'Ayuda' },
+  { href: '/dashboard/affiliates',  icon: '💰', label: 'Afiliados' },
 ]
 
 const PLAN_COLORS: Record<string, string> = {
