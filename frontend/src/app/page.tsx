@@ -459,6 +459,7 @@ export default function HomePage() {
             </div>
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-white/30 text-sm">
               <a href="#platforms" className="hover:text-white/60 transition-colors">Plataformas</a>
+              <Link href="/blog" className="hover:text-white/60 transition-colors">Blog</Link>
               <a href="#pricing" className="hover:text-white/60 transition-colors">Precios</a>
               <Link href="/login" className="hover:text-white/60 transition-colors">Login</Link>
               <Link href="/register" className="hover:text-white/60 transition-colors">Registro</Link>
