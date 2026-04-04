@@ -14,14 +14,15 @@ export const authRouter = Router()
 
 // ─── Schemas robustos ──────────────────────────────────────────────────────
 const registerSchema = z.object({
-  name:     z.string().min(2).max(100).trim()
-            .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Name contains invalid characters'),
-  email:    z.string().email().max(254).toLowerCase().trim(),
-  password: z.string()
-            .min(8, 'Password must be at least 8 characters')
-            .max(128, 'Password too long')
-            .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-            .regex(/[0-9]/, 'Must contain at least one number'),
+  name:          z.string().min(2).max(100).trim()
+                 .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Name contains invalid characters'),
+  email:         z.string().email().max(254).toLowerCase().trim(),
+  password:      z.string()
+                 .min(8, 'Password must be at least 8 characters')
+                 .max(128, 'Password too long')
+                 .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+                 .regex(/[0-9]/, 'Must contain at least one number'),
+  affiliateCode: z.string().max(32).optional(),  // código de afiliado referente
 })
 
 const loginSchema = z.object({
@@ -64,7 +65,7 @@ async function constantTimeCompare(plain: string, hash: string): Promise<boolean
 // ─── POST /api/auth/register ──────────────────────────────────────────────
 authRouter.post('/register', authLimiter, validate(registerSchema), async (req, res, next) => {
   try {
-    const { name, email, password } = req.body
+    const { name, email, password, affiliateCode } = req.body
 
     // Verificar email con bcrypt cost alto
     const existing = await prisma.user.findUnique({ where: { email } })
@@ -86,6 +87,7 @@ authRouter.post('/register', authLimiter, validate(registerSchema), async (req, 
         passwordHash,
         emailVerifyToken: verifyToken,
         emailVerified:    false,
+        affiliateCode:    affiliateCode ?? null,
         settings: { create: {} },
       },
       select: {
