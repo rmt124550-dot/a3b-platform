@@ -208,4 +208,55 @@ setInterval(async () => {
     logger.warn({ event: 'CLEANUP_JOB_ERROR', error: err.message })
   }
 }, 24 * 60 * 60 * 1000) // cada 24 horas
+// ─── Cron: emails de aviso de trial (cada 24h) ───────────────────────────────
+setInterval(async () => {
+  try {
+    const now   = new Date()
+    const in6d  = new Date(now.getTime() + 6  * 24 * 60 * 60 * 1000)
+    const in6dE = new Date(now.getTime() + 7  * 24 * 60 * 60 * 1000)
+
+    // Usuarios cuyo trial expira en exactamente 6 días (ventana de 24h)
+    const expiringSoon = await prisma.user.findMany({
+      where: {
+        trialEndsAt: { gte: in6d, lt: in6dE },
+        plan: 'free',
+        emailVerified: true,
+        deletedAt: null,
+      },
+      select: { id: true, email: true, name: true, trialEndsAt: true },
+    })
+
+    for (const u of expiringSoon) {
+      const { sendTrialExpiringEmail } = await import('./services/email')
+      sendTrialExpiringEmail(u.email, u.name ?? '', 6).catch(() => {})
+    }
+
+    // Usuarios cuyo trial expiró ayer → email de expiración
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const justExpired = await prisma.user.findMany({
+      where: {
+        trialEndsAt: { gte: yesterday, lt: now },
+        plan: 'free',
+        emailVerified: true,
+        deletedAt: null,
+      },
+      select: { id: true, email: true, name: true },
+    })
+
+    for (const u of justExpired) {
+      const { sendTrialExpiredEmail } = await import('./services/email')
+      sendTrialExpiredEmail(u.email, u.name ?? '').catch(() => {})
+    }
+
+    if (expiringSoon.length + justExpired.length > 0) {
+      logger.info({
+        event: 'TRIAL_EMAILS_SENT',
+        expiringSoon: expiringSoon.length,
+        justExpired: justExpired.length,
+      })
+    }
+  } catch (err: any) {
+    logger.warn({ event: 'TRIAL_CRON_ERROR', error: err.message })
+  }
+}, 24 * 60 * 60 * 1000)
 
