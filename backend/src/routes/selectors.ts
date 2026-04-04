@@ -58,13 +58,19 @@ const DEFAULT_SELECTORS = [
 
 async function seedIfEmpty() {
   try {
-    const count = await prisma.platformSelector.count()
-    if (count > 0) return
+    // Siempre hacer upsert para asegurar que requiredPlan esté actualizado
+    // aunque los registros ya existan de una versión anterior
     await Promise.all(DEFAULT_SELECTORS.map(s =>
       prisma.platformSelector.upsert({
         where:  { platform: s.platform },
         create: { ...s, selectors: JSON.stringify(s.selectors) },
-        update: {},
+        update: {
+          requiredPlan: s.requiredPlan,
+          displayName:  s.displayName,
+          hostPattern:  s.hostPattern,
+          selectors:    JSON.stringify(s.selectors),
+          priority:     s.priority,
+        },
       })
     ))
     logger.info({ event: 'SELECTORS_SEED_OK', count: DEFAULT_SELECTORS.length })
