@@ -189,7 +189,7 @@ export default app
 // ─── Job de limpieza automática (cada 24h) ────────────────────────────────────
 setInterval(async () => {
   try {
-    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 días
+    const cutoff = new Date(Date.now() - 36 * 24 * 60 * 60 * 1000) // 36 días
 
     // Eliminar usuarios que nunca verificaron su email tras 7 días
     const deleted = await prisma.user.deleteMany({
