@@ -145,3 +145,19 @@ model UsageLog {
 
   @@map("usage_logs")
 }
+
+// ─── Selectores dinámicos por plataforma ─────────────────────────────────────
+model PlatformSelector {
+  id          String   @id @default(uuid())
+  platform    String   @unique              // "coursera" | "youtube" | "udemy" | "edx" | "linkedin"
+  displayName String   @map("display_name") // "Coursera", "YouTube", etc.
+  hostPattern String   @map("host_pattern") // "*.coursera.org"
+  selectors   String                        // JSON array de strings CSS
+  enabled     Boolean  @default(true)
+  priority    Int      @default(100)        // mayor = se intenta primero
+  notes       String?                       // notas del admin sobre cambios
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("platform_selectors")
+}
