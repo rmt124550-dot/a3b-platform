@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth-store'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
+import VerifyEmailBanner from '@/components/VerifyEmailBanner'
 
 const NAV = [
   { href: '/dashboard',            icon: '◈', label: 'Overview' },
@@ -18,7 +19,8 @@ const PLAN_COLORS: Record<string, string> = {
   free: 'plan-free', pro: 'plan-pro', team: 'plan-team'
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({user && !user.emailVerified && <VerifyEmailBanner email={user.email ?? \'\'} />}
+{ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, logout, isAuthenticated } = useAuthStore()
