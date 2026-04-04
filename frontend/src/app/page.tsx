@@ -499,6 +499,7 @@ export default function HomePage() {
               <Link href="/login" className="hover:text-white/60 transition-colors">Login</Link>
               <Link href="/register" className="hover:text-white/60 transition-colors">Registro</Link>
               <a href="mailto:hello@a3bhub.cloud" className="hover:text-white/60 transition-colors">Contacto</a>
+              <Link href="/help" className="hover:text-white/60 transition-colors">Ayuda</Link>
             </div>
           </div>
 
@@ -514,6 +515,9 @@ export default function HomePage() {
               </Link>
               <Link href="/terms" className="hover:text-white/50 transition-colors">
                 Términos de Uso
+              </Link>
+              <Link href="/help" className="hover:text-white/50 transition-colors">
+                Centro de Ayuda
               </Link>
               <a
                 href="https://github.com/rmt124550-dot/a3b-platform/blob/main/LICENSE"
