@@ -60,19 +60,48 @@ billingRouter.get('/plans', (_req, res) => {
     plans: [
       {
         id: 'free', name: 'Free', price: 0, currency: 'usd', interval: 'forever',
-        features: ['Google Translate', 'Solo EN→ES', 'Todas las plataformas', 'Sin historial'],
+        features: [
+          'Coursera — narración en tiempo real',
+          'Google Translate (EN → ES)',
+          'Web Speech API (voz del sistema)',
+          'Overlay en pantalla',
+          'Todas las plataformas mobile (Kiwi, Firefox Android)',
+        ],
+        limitations: [
+          'Solo Coursera en desktop',
+          'Sin historial de frases',
+          'Sin diccionario personal',
+          'Sin DeepL',
+        ],
       },
       {
         id: 'pro', name: 'Pro', price: 4.99, currency: 'usd', interval: 'month',
         priceId: PLANS.pro.priceId,
-        features: ['DeepL (mayor calidad)', '10 idiomas', 'Historial 30 días', 'Diccionario personal', 'Sin límites'],
+        features: [
+          '7 días gratis — sin tarjeta requerida',
+          'YouTube, Udemy, edX, LinkedIn Learning',
+          'DeepL — mayor calidad de traducción',
+          '10 idiomas de destino',
+          'Historial de frases 30 días',
+          'Diccionario personal de términos técnicos',
+          'Sincronización de configuración en la nube',
+        ],
         trial_days: 7,
+        trial_no_card: true,
       },
       {
         id: 'team', name: 'Team', price: 19.99, currency: 'usd', interval: 'month',
         priceId: PLANS.team.priceId,
-        features: ['Todo lo de Pro', 'Usuarios ilimitados', 'Dashboard admin', 'API access', 'Soporte prioritario'],
+        features: [
+          '7 días gratis — sin tarjeta requerida',
+          'Todo lo de Pro',
+          'Usuarios ilimitados',
+          'Dashboard de administración',
+          'API access',
+          'Soporte prioritario',
+        ],
         trial_days: 7,
+        trial_no_card: true,
       },
     ],
   })
@@ -116,6 +145,10 @@ billingRouter.post('/checkout', authenticate, async (req, res, next) => {
         trial_period_days: 7,
         metadata: { userId: user.id, plan },
       },
+      // ── Trial sin tarjeta requerida ──────────────────────────────────────
+      // El usuario prueba 7 días gratis. Al terminar el trial,
+      // Stripe envía invoice → si no hay tarjeta, cancela → webhook → plan=free
+      payment_method_collection: 'if_required',
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
     })
