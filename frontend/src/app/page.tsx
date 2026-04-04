@@ -403,7 +403,7 @@ export default function HomePage() {
       <section className="py-24 px-6 border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-black mb-4">Empieza gratis</h2>
-          <p className="text-white/40 mb-16">Free incluye Coursera. PRO desbloquea todas las plataformas — 7 días gratis, sin tarjeta.</p>
+          <p className="text-white/40 mb-16">Free incluye Coursera. PRO desbloquea todas las plataformas — 36 días gratis, sin tarjeta.</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
@@ -417,17 +417,17 @@ export default function HomePage() {
                 name:'Pro', price:'$4.99', period:'/mes',
                 border:'border-[#6366f1]/60', bg:'bg-[#6366f1]/5',
                 highlight:true,
-                badge:'🎁 7 días gratis · Sin tarjeta',
+                badge:'🎁 36 días gratis · Sin tarjeta',
                 features:['YouTube · Udemy · edX · LinkedIn','DeepL — mayor calidad','10 idiomas destino','Historial 30 días','Diccionario personal'],
-                cta:'Probar 7 días gratis', href:'/register?plan=pro',
+                cta:'Probar 36 días gratis', href:'/register?plan=pro',
                 ctaStyle:'bg-[#6366f1] text-white hover:bg-[#5558e8]',
               },
               {
                 name:'Team', price:'$19.99', period:'/mes',
                 border:'border-white/10', bg:'bg-white/2',
-                badge:'🎁 7 días gratis · Sin tarjeta',
+                badge:'🎁 36 días gratis · Sin tarjeta',
                 features:['Todo lo de Pro','Usuarios ilimitados','Dashboard admin','API access','Soporte prioritario'],
-                cta:'Probar 7 días gratis', href:'/register?plan=team',
+                cta:'Probar 36 días gratis', href:'/register?plan=team',
                 ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
               },
             ].map(plan => (
