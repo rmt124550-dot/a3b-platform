@@ -163,6 +163,12 @@ app.use('/api/billing',    billingRouter)
 app.use('/api/admin',      adminRouter)
 app.use('/api/selectors',  selectorsRouter)   // público — sin auth
 
+// ─── Seed de selectores en startup (garantiza requiredPlan actualizado) ────────
+import { seedSelectorsOnStartup } from './routes/selectors'
+seedSelectorsOnStartup().catch((err: any) =>
+  logger.warn({ event: 'SELECTORS_STARTUP_SEED_FAILED', error: err?.message })
+)
+
 // ─── Error handlers ───────────────────────────────────────────────────────
 app.use(notFound)
 app.use(errorHandler)
