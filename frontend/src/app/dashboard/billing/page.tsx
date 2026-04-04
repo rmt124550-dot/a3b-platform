@@ -45,7 +45,7 @@ export default function BillingPage() {
     new Intl.NumberFormat('es', { style: 'currency', currency: currency.toUpperCase() }).format(cents / 100)
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 md:p-8 max-w-3xl">
       <div className="mb-8 animate-fadeup">
         <h1 className="font-serif text-3xl mb-1">Facturación</h1>
         <p className="text-sm text-white/40">Gestiona tu suscripción y pagos</p>
