@@ -1,220 +1,192 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import toast from 'react-hot-toast'
+import Link from 'next/link'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth-store'
+import { useRouter } from 'next/navigation'
 
 interface Metrics {
-  users: { total: number; free: number; pro: number; team: number }
-  revenue: { total: number; mrr: string }
-  activity: { translationsToday: number }
-  recentSignups: Array<{ id: string; name: string; email: string; plan: string; createdAt: string }>
+  users: { total: number; free: number; pro: number; team: number; emailVerified: number }
+  revenue?: { mrr: number; arr: number }
 }
+
 interface User {
-  id: string; email: string; name: string | null
-  plan: string; role: string; createdAt: string; lastLoginAt: string | null
+  id: string; email: string; name: string | null; plan: string
+  role: string; emailVerified: boolean; createdAt: string
 }
 
 export default function AdminPage() {
-  const router = useRouter()
   const { user } = useAuthStore()
-  const [metrics, setMetrics] = useState<Metrics | null>(null)
-  const [users, setUsers] = useState<User[]>([])
-  const [total, setTotal] = useState(0)
-  const [search, setSearch] = useState('')
-  const [planFilter, setPlanFilter] = useState('')
-  const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
+  const router   = useRouter()
+  const [metrics,  setMetrics]  = useState<Metrics | null>(null)
+  const [users,    setUsers]    = useState<User[]>([])
+  const [search,   setSearch]   = useState('')
+  const [loading,  setLoading]  = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     if (user?.role !== 'admin') { router.replace('/dashboard'); return }
-    loadMetrics()
-  }, [user, router])
+    Promise.all([
+      api.get('/api/admin/metrics').then(r => setMetrics(r.data)),
+      api.get('/api/admin/users?limit=100').then(r => setUsers(r.data.users ?? [])),
+    ]).finally(() => setLoading(false))
+  }, [user])
 
-  useEffect(() => { loadUsers() }, [search, planFilter, page])
-
-  async function loadMetrics() {
-    try {
-      const { data } = await api.get('/api/admin/metrics')
-      setMetrics(data)
-    } catch { toast.error('Error al cargar métricas') }
-  }
-
-  async function loadUsers() {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: '20' })
-      if (search) params.set('search', search)
-      if (planFilter) params.set('plan', planFilter)
-      const { data } = await api.get(`/api/admin/users?${params}`)
-      setUsers(data.users)
-      setTotal(data.total)
-    } catch {} finally { setLoading(false) }
-  }
-
-  async function changePlan(id: string, plan: string) {
-    try {
-      await api.patch(`/api/admin/users/${id}`, { plan })
-      toast.success(`Plan actualizado a ${plan}`)
-      loadUsers()
-    } catch { toast.error('Error') }
-  }
-
-  async function suspendUser(id: string) {
-    if (!confirm('¿Suspender este usuario?')) return
+  async function deleteUser(id: string, email: string) {
+    if (!confirm(`¿Eliminar usuario ${email}?`)) return
+    setDeleting(id)
     try {
       await api.delete(`/api/admin/users/${id}`)
-      toast.success('Usuario suspendido')
-      loadUsers()
-    } catch { toast.error('Error') }
+      setUsers(prev => prev.filter(u => u.id !== id))
+    } catch { alert('Error al eliminar') }
+    finally { setDeleting(null) }
   }
 
-  const fmt = (iso: string) => new Date(iso).toLocaleDateString('es', { month: 'short', day: 'numeric', year: '2-digit' })
-  const PLAN_BADGE: Record<string, string> = {
-    free: 'badge text-[10px] plan-free', pro: 'badge text-[10px] plan-pro', team: 'badge text-[10px] plan-team'
-  }
+  const filtered = users.filter(u =>
+    search === '' ||
+    u.email.toLowerCase().includes(search.toLowerCase()) ||
+    (u.name ?? '').toLowerCase().includes(search.toLowerCase())
+  )
+
+  if (loading) return (
+    <div className="p-8 text-white/30 text-sm">Cargando panel admin...</div>
+  )
+
+  const u = metrics?.users
+  const MRR = u ? (u.pro * 4.99 + u.team * 19.99) : 0
+  const ARR = MRR * 12
 
   return (
-    <div className="p-8 max-w-6xl">
-      <div className="mb-8 animate-fadeup">
-        <div className="flex items-center gap-3 mb-1">
-          <span className="font-mono text-amber-400 text-sm">⬡ Admin</span>
-        </div>
-        <h1 className="font-serif text-3xl">Panel de administración</h1>
+    <div className="p-4 md:p-8 max-w-5xl">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-black">Panel Admin</h1>
+        <span className="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full font-bold">
+          👑 ADMIN
+        </span>
       </div>
 
-      {/* Metrics grid */}
-      {metrics && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 animate-fadeup delay-100">
-          {[
-            { label: 'MRR', value: `$${metrics.revenue.mrr}`, sub: 'Mensual recurrente', color: 'text-emerald' },
-            { label: 'Ingresos totales', value: `$${metrics.revenue.total.toFixed(0)}`, sub: 'Histórico', color: 'text-indigo' },
-            { label: 'Usuarios', value: metrics.users.total, sub: `${metrics.users.pro} PRO · ${metrics.users.team} Team`, color: 'text-white' },
-            { label: 'Traducciones hoy', value: metrics.activity.translationsToday, sub: 'Actividad del día', color: 'text-violet' },
-          ].map((m) => (
-            <div key={m.label} className="card p-5">
-              <div className={`font-mono text-2xl font-medium mb-1 ${m.color}`}>{m.value}</div>
-              <div className="text-xs font-semibold text-white/60">{m.label}</div>
-              <div className="text-[10px] text-white/30 mt-0.5">{m.sub}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Plan breakdown */}
-      {metrics && (
-        <div className="card p-5 mb-6 animate-fadeup delay-200">
-          <h2 className="text-xs font-bold text-white/35 uppercase tracking-widest mb-4">Distribución de planes</h2>
-          <div className="flex items-center gap-4">
-            {[
-              { label: 'Free', count: metrics.users.free, color: 'bg-white/10' },
-              { label: 'PRO', count: metrics.users.pro, color: 'bg-indigo/60' },
-              { label: 'Team', count: metrics.users.team, color: 'bg-violet/60' },
-            ].map((p) => (
-              <div key={p.label} className="flex-1">
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-white/50">{p.label}</span>
-                  <span className="font-mono">{p.count}</span>
-                </div>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${p.color} transition-all duration-700`}
-                    style={{ width: `${metrics.users.total ? (p.count/metrics.users.total*100) : 0}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+      {/* ── Métricas ─────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        {[
+          { label: 'Total usuarios', value: u?.total ?? 0,        color: 'text-white' },
+          { label: 'Plan PRO',       value: u?.pro ?? 0,          color: 'text-[#a5b4fc]' },
+          { label: 'Plan Team',      value: u?.team ?? 0,         color: 'text-violet-400' },
+          { label: 'MRR estimado',   value: `$${MRR.toFixed(0)}`, color: 'text-emerald-400' },
+        ].map(s => (
+          <div key={s.label} className="bg-white/3 border border-white/8 rounded-xl p-4">
+            <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+            <div className="text-white/35 text-xs mt-0.5">{s.label}</div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* Users table */}
-      <div className="animate-fadeup delay-300">
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      {/* ── Métricas secundarias ─────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        {[
+          { label: 'Plan Free',         value: u?.free ?? 0,          color: 'text-white/60' },
+          { label: 'Emails verificados', value: u?.emailVerified ?? 0, color: 'text-emerald-400' },
+          { label: 'ARR estimado',       value: `$${ARR.toFixed(0)}`,  color: 'text-emerald-400' },
+          { label: 'Conversión Free→PRO',value: u?.total && u.total > 1
+              ? `${((u.pro + u.team) / u.total * 100).toFixed(1)}%`
+              : '—',                                                    color: 'text-amber-400' },
+        ].map(s => (
+          <div key={s.label} className="bg-white/3 border border-white/8 rounded-xl p-4">
+            <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
+            <div className="text-white/30 text-xs mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Acciones rápidas ─────────────────────── */}
+      <div className="grid sm:grid-cols-3 gap-3 mb-8">
+        <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer"
+          className="bg-white/3 border border-white/8 rounded-xl p-4 hover:border-white/15 transition-all">
+          <div className="text-2xl mb-2">💳</div>
+          <div className="font-semibold text-sm">Stripe Dashboard</div>
+          <div className="text-white/30 text-xs">Pagos y suscripciones</div>
+        </a>
+        <a href="https://app.resend.com" target="_blank" rel="noopener noreferrer"
+          className="bg-white/3 border border-white/8 rounded-xl p-4 hover:border-white/15 transition-all">
+          <div className="text-2xl mb-2">📧</div>
+          <div className="font-semibold text-sm">Resend</div>
+          <div className="text-white/30 text-xs">Emails enviados</div>
+        </a>
+        <Link href="/dashboard/affiliates"
+          className="bg-white/3 border border-white/8 rounded-xl p-4 hover:border-white/15 transition-all">
+          <div className="text-2xl mb-2">💰</div>
+          <div className="font-semibold text-sm">Afiliados</div>
+          <div className="text-white/30 text-xs">Comisiones y pagos</div>
+        </Link>
+      </div>
+
+      {/* ── Lista de usuarios ─────────────────────── */}
+      <div className="bg-white/3 border border-white/8 rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-white/6 flex items-center justify-between gap-4">
+          <h2 className="font-bold text-sm">Usuarios ({users.length})</h2>
           <input
-            className="input flex-1 text-sm"
+            value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por email o nombre..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            className="bg-black/30 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white w-48 sm:w-64 focus:outline-none focus:border-[#6366f1]/50"
           />
-          <select
-            className="input w-auto text-sm"
-            value={planFilter}
-            onChange={(e) => { setPlanFilter(e.target.value); setPage(1) }}
-          >
-            <option value="">Todos los planes</option>
-            <option value="free">Free</option>
-            <option value="pro">Pro</option>
-            <option value="team">Team</option>
-          </select>
         </div>
-
-        <div className="card overflow-hidden">
-          <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-white/6 text-[10px] font-bold text-white/25 uppercase tracking-widest">
-            <div className="col-span-4">Usuario</div>
-            <div className="col-span-2">Plan</div>
-            <div className="col-span-2">Registro</div>
-            <div className="col-span-2">Último acceso</div>
-            <div className="col-span-2 text-right">Acciones</div>
-          </div>
-
-          {loading ? (
-            <div className="px-5 py-8 text-center text-white/30 text-sm">Cargando...</div>
-          ) : users.length === 0 ? (
-            <div className="px-5 py-8 text-center text-white/30 text-sm">No se encontraron usuarios</div>
-          ) : (
-            users.map((u, i) => (
-              <div
-                key={u.id}
-                className={`grid grid-cols-12 gap-3 px-5 py-3.5 items-center text-sm transition-colors hover:bg-white/2 ${
-                  i < users.length - 1 ? 'border-b border-white/4' : ''
-                }`}
-              >
-                <div className="col-span-4 min-w-0">
-                  <div className="font-medium truncate">{u.name ?? '—'}</div>
-                  <div className="text-xs text-white/35 truncate">{u.email}</div>
-                </div>
-                <div className="col-span-2">
-                  <span className={PLAN_BADGE[u.plan] ?? PLAN_BADGE.free}>{u.plan}</span>
-                </div>
-                <div className="col-span-2 text-xs text-white/40 font-mono">{fmt(u.createdAt)}</div>
-                <div className="col-span-2 text-xs text-white/40 font-mono">
-                  {u.lastLoginAt ? fmt(u.lastLoginAt) : '—'}
-                </div>
-                <div className="col-span-2 flex items-center justify-end gap-2">
-                  <select
-                    value={u.plan}
-                    onChange={(e) => changePlan(u.id, e.target.value)}
-                    className="bg-s2 border border-white/8 rounded-lg px-2 py-1 text-xs text-white/70 outline-none"
-                  >
-                    <option value="free">free</option>
-                    <option value="pro">pro</option>
-                    <option value="team">team</option>
-                  </select>
-                  <button
-                    onClick={() => suspendUser(u.id)}
-                    className="text-white/20 hover:text-rose text-xs transition-colors"
-                    title="Suspender"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ))
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="border-b border-white/6">
+              <tr className="text-white/30 text-left">
+                <th className="px-4 py-3 font-normal">Email</th>
+                <th className="px-4 py-3 font-normal">Plan</th>
+                <th className="px-4 py-3 font-normal">Verificado</th>
+                <th className="px-4 py-3 font-normal">Creado</th>
+                <th className="px-4 py-3 font-normal">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.slice(0, 50).map(u => (
+                <tr key={u.id} className="border-b border-white/4 hover:bg-white/2">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {u.role === 'admin' && <span className="text-amber-400">👑</span>}
+                      <div>
+                        <div className="text-white/80">{u.email}</div>
+                        {u.name && <div className="text-white/30">{u.name}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] border ${
+                      u.plan === 'pro'  ? 'border-[#6366f1]/30 bg-[#6366f1]/10 text-[#a5b4fc]' :
+                      u.plan === 'team' ? 'border-violet-500/30 bg-violet-500/10 text-violet-300' :
+                      'border-white/10 bg-white/5 text-white/40'
+                    }`}>
+                      {u.plan.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {u.emailVerified ? '✅' : '❌'}
+                  </td>
+                  <td className="px-4 py-3 text-white/35">
+                    {new Date(u.createdAt).toLocaleDateString('es', { day:'numeric', month:'short', year:'2-digit' })}
+                  </td>
+                  <td className="px-4 py-3">
+                    {u.role !== 'admin' && (
+                      <button
+                        onClick={() => deleteUser(u.id, u.email)}
+                        disabled={deleting === u.id}
+                        className="text-red-400/60 hover:text-red-400 text-[10px] disabled:opacity-40">
+                        {deleting === u.id ? '...' : 'Eliminar'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filtered.length > 50 && (
+            <div className="px-4 py-3 text-white/25 text-xs">
+              Mostrando 50 de {filtered.length} usuarios
+            </div>
           )}
         </div>
-
-        {total > 20 && (
-          <div className="flex items-center justify-between mt-4 text-xs text-white/35">
-            <span className="font-mono">{total} usuarios en total</span>
-            <div className="flex gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page===1} className="btn-ghost text-xs px-3 py-1.5">←</button>
-              <span className="font-mono px-2 py-1.5">Pág {page} / {Math.ceil(total/20)}</span>
-              <button onClick={() => setPage(p => p+1)} disabled={page >= Math.ceil(total/20)} className="btn-ghost text-xs px-3 py-1.5">→</button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
