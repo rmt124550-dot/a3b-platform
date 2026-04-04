@@ -1,0 +1,12 @@
+{
+  "name": "A3B Narrator",
+  "short_name": "A3B",
+  "description": "Traduce y narra subtítulos en tu idioma",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080810",
+  "theme_color": "#6366f1",
+  "icons": [
+    { "src": "/apple-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
