@@ -62,7 +62,7 @@ export default function ProductHuntPage() {
         <div className="grid sm:grid-cols-2 gap-4 text-left mb-12">
           {[
             { icon: '🎓', title: 'Coursera gratis', desc: 'Narración completa sin cuenta ni pago.' },
-            { icon: '▶️', title: 'YouTube, Udemy, edX, LinkedIn', desc: 'Desbloquea con PRO — 7 días gratis.' },
+            { icon: '▶️', title: 'YouTube, Udemy, edX, LinkedIn', desc: 'Desbloquea con PRO — 36 días gratis.' },
             { icon: '🔊', title: 'Web Speech API nativa', desc: 'Usa la voz del sistema. Sin servidores.' },
             { icon: '🌐', title: 'DeepL incluido (PRO)', desc: 'Traducción de mayor calidad para textos técnicos.' },
             { icon: '📱', title: 'Funciona en Android', desc: 'Kiwi Browser + Firefox Nightly.' },
