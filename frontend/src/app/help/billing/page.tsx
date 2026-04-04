@@ -34,9 +34,9 @@ export default function BillingHelpPage() {
           </section>
 
           <section>
-            <h2 className="text-white font-bold text-base mb-3">Trial de 7 días gratis</h2>
+            <h2 className="text-white font-bold text-base mb-3">Trial de 36 días gratis</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Los planes PRO y Team incluyen <strong className="text-white/80">7 días de prueba gratuita</strong></li>
+              <li>Los planes PRO y Team incluyen <strong className="text-white/80">36 días de prueba gratuita</strong></li>
               <li><strong className="text-white/80">No se requiere tarjeta de crédito</strong> para activar el trial</li>
               <li>Al terminar el trial, puedes agregar una tarjeta para continuar o vuelves al plan Free automáticamente</li>
               <li>Activa el trial en: <Link href="/register?plan=pro" className="text-[#a5b4fc] hover:underline">app.a3bhub.cloud/register?plan=pro</Link></li>
