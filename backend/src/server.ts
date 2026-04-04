@@ -278,21 +278,24 @@ setInterval(async () => {
         emailVerified: true,
         deletedAt:     null,
       },
-      select: { id: true, email: true, name: true, trialEndsAt: true, trialDaysLeft: true },
+      select: { id: true, email: true, name: true, trialEndsAt: true },
     })
 
     for (const u of activeTrialUsers) {
+      // Calcular días restantes del trial
+      const trialDaysLeft = u.trialEndsAt
+        ? Math.max(0, Math.ceil((new Date(u.trialEndsAt).getTime() - now.getTime()) / (1000*60*60*24)))
+        : null
       // Contar frases traducidas esta semana
       const weekCount = await prisma.translationHistory.count({
         where: { userId: u.id, createdAt: { gte: weekAgo } },
       })
       if (weekCount === 0) continue // No mostividad → no enviar
-
-      const daysLeft = u.trialEndsAt
         ? Math.max(0, Math.ceil((new Date(u.trialEndsAt).getTime() - now.getTime()) / (1000*60*60*24)))
         : null
 
       const { sendEmail } = await import('./services/email')
+      const daysLeft = trialDaysLeft
       const warningHtml = (daysLeft !== null && daysLeft <= 7)
         ? `<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:16px;margin:0 0 20px;"><p style="color:#fbbf24;font-size:13px;margin:0;">⚠️ Tu trial termina en <strong>${daysLeft} día${daysLeft === 1 ? '' : 's'}</strong>. No pierdas el ritmo.</p></div>`
         : ''
