@@ -189,3 +189,50 @@ selectorsRouter.post('/invalidate-cache', authenticate, requireAdmin, async (_re
   try { await redis.del(CACHE_KEY) } catch {}
   res.json({ ok: true, message: 'Cache invalidated' })
 })
+
+// ─── POST /api/selectors/run-migration ──────────────────────────────────────
+// Endpoint de migración one-shot protegido con token secreto.
+// Actualiza requiredPlan en filas existentes e invalida caché.
+// Llama UNA VEZ después del deploy, luego ignora peticiones repetidas.
+const MIGRATION_TOKEN = process.env.MIGRATION_SECRET ?? 'a3b-migration-2026'
+let migrationDone = false
+
+selectorsRouter.post('/run-migration', async (req, res) => {
+  const token = req.headers['x-migration-token'] ?? req.body?.token
+  if (token !== MIGRATION_TOKEN) {
+    return res.status(403).json({ error: 'Invalid migration token' })
+  }
+  if (migrationDone) {
+    return res.json({ ok: true, message: 'Migration already ran this session', skipped: true })
+  }
+
+  try {
+    // Definir requiredPlan para cada plataforma
+    const planMap: Record<string, string> = {
+      coursera:  'free',
+      youtube:   'pro',
+      udemy:     'pro',
+      edx:       'pro',
+      linkedin:  'pro',
+    }
+
+    const results: string[] = []
+    for (const [platform, plan] of Object.entries(planMap)) {
+      const updated = await prisma.platformSelector.updateMany({
+        where: { platform },
+        data:  { requiredPlan: plan },
+      })
+      results.push(`${platform}=${plan} (${updated.count} rows)`)
+    }
+
+    // Invalidar caché Redis
+    try { await redis.del(CACHE_KEY) } catch {}
+
+    migrationDone = true
+    logger.info({ event: 'SELECTORS_MIGRATION_OK', results })
+    res.json({ ok: true, results, message: 'requiredPlan updated + Redis cache cleared' })
+  } catch (err: any) {
+    logger.error({ event: 'SELECTORS_MIGRATION_FAILED', error: err.message })
+    res.status(500).json({ error: err.message })
+  }
+})
