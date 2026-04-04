@@ -1,6 +1,20 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import PlatformLogo from '@/components/PlatformLogos'
+interface PlanConfig {
+  name: string
+  price: string
+  period: string
+  border: string
+  bg: string
+  highlight?: boolean
+  trial?: string
+  features: string[]
+  cta: string
+  href: string
+  ctaStyle: string
+}
+
 
 export const metadata: Metadata = {
   title: 'A3B Narrator — Aprende en tu idioma en cualquier plataforma',
@@ -428,7 +442,7 @@ export default function HomePage() {
                 cta:'Probar 7 días gratis', href:'/register?plan=team',
                 ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
               },
-            ].map((plan: {name:string;price:string;period:string;border:string;bg:string;highlight?:boolean;trial?:string;features:string[];cta:string;href:string;ctaStyle:string}) => (
+              ].map((plan: PlanConfig) => (
               <div key={plan.name} className={`${plan.bg} border ${plan.border} rounded-2xl p-8 relative`}>
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6366f1] text-[10px] font-black tracking-widest text-white px-3 py-1 rounded-full">
@@ -469,7 +483,7 @@ export default function HomePage() {
                 cta:'Elegir Team', href:'/pricing',
                 ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
               },
-            ].map((plan: {name:string;price:string;period:string;border:string;bg:string;highlight?:boolean;trial?:string;features:string[];cta:string;href:string;ctaStyle:string}) => (
+              ].map((plan: PlanConfig) => (
               <div key={plan.name} className={`${plan.bg} border ${plan.border} rounded-2xl p-8 relative`}>
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6366f1] text-[10px] font-black px-3 py-1 rounded-full tracking-wider">
