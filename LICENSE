@@ -1,0 +1,96 @@
+Server Side Public License (SSPL) v1
+Adapted for A3B Platform — A3B Cloud
+Copyright (C) 2026 A3B Cloud. All rights reserved.
+
+=========================================================================
+TERMS AND CONDITIONS
+
+1. DEFINITIONS
+
+"The Software" means A3B Platform, including the backend API, frontend
+web application, database schemas, infrastructure code, and all
+associated source files in this repository.
+
+"Service" means any software-as-a-service, platform-as-a-service, or
+similar offering that allows third parties to access the functionality
+of The Software over a network.
+
+"You" means any individual or legal entity exercising the rights granted
+by this License.
+
+2. GRANT OF RIGHTS
+
+Subject to the terms of this License, A3B Cloud grants You a worldwide,
+royalty-free, non-exclusive, non-transferable license to:
+
+  a) View, study, and modify the source code for personal, educational,
+     and internal business purposes;
+
+  b) Self-host The Software for personal or non-commercial use, provided
+     You do not offer it as a Service to third parties.
+
+3. CONDITION: OFFERING AS A SERVICE
+
+If You make the functionality of The Software, or any modified version
+of it, available to third parties as a Service (including but not
+limited to SaaS, API services, or hosted platforms), You MUST:
+
+  a) Make the complete corresponding source code of The Software and
+     all modifications available under this License;
+
+  b) Include the complete source code of any programs used to run The
+     Software as a Service (management tools, build systems, deployment
+     infrastructure, monitoring tools, etc.);
+
+  c) Make such source code available at no charge, via a publicly
+     accessible repository, before offering the Service.
+
+This obligation is the core of the SSPL: if you run this software as a
+service for others, you must open source everything needed to run it.
+
+4. COMMERCIAL USE RESTRICTION
+
+You may NOT use The Software, or any portion thereof, to offer a
+competing commercial service (a service that is substantially similar
+to a3bhub.cloud or A3B Narrator) without prior written authorization
+from A3B Cloud.
+
+Contact: hello@a3bhub.cloud
+
+5. REDISTRIBUTION
+
+You may redistribute verbatim copies of The Software in source form,
+provided that You:
+
+  a) Retain this License in its entirety;
+  b) Clearly indicate any modifications You made;
+  c) Do not use A3B Cloud's trademarks or branding without permission.
+
+6. DISCLAIMER OF WARRANTIES
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+NONINFRINGEMENT.
+
+7. LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL A3B CLOUD BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+
+8. TRADEMARKS
+
+This License does not grant permission to use the "A3B Narrator",
+"A3B Cloud", or "a3bhub.cloud" trademarks or logos.
+
+9. GOVERNING LAW
+
+This License shall be governed by the laws applicable in Lima, Peru.
+
+=========================================================================
+For commercial licensing, partnerships, or questions:
+hello@a3bhub.cloud | https://a3bhub.cloud
+
+The Chrome extension (a3b-coursera-voice-narrator) is separately
+licensed under the MIT License.
+=========================================================================
