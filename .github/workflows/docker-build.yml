@@ -64,6 +64,11 @@ jobs:
         with:
           username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          registry: registry.a3bhub.cloud
+          username: root
+          password: ${{ secrets.GITLAB_TOKEN }}
 
       - name: Build & push backend (amd64)
         uses: docker/build-push-action@v5
@@ -71,7 +76,9 @@ jobs:
           context: ./backend
           platforms: linux/amd64
           push: true
-          tags: ${{ env.DOCKER_USER }}/a3b-backend:amd64
+          tags: |
+            ${{ env.DOCKER_USER }}/a3b-backend:amd64
+            registry.a3bhub.cloud/root/a3b-backend:amd64
           cache-from: type=gha,scope=amd64-backend
           cache-to: type=gha,mode=max,scope=amd64-backend
 
@@ -92,6 +99,11 @@ jobs:
         with:
           username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          registry: registry.a3bhub.cloud
+          username: root
+          password: ${{ secrets.GITLAB_TOKEN }}
 
       - name: Build & push backend (arm64)
         uses: docker/build-push-action@v5
@@ -99,7 +111,9 @@ jobs:
           context: ./backend
           platforms: linux/arm64
           push: true
-          tags: ${{ env.DOCKER_USER }}/a3b-backend:arm64
+          tags: |
+            ${{ env.DOCKER_USER }}/a3b-backend:arm64
+            registry.a3bhub.cloud/root/a3b-backend:arm64
           cache-from: type=gha,scope=arm64-backend
           cache-to: type=gha,mode=max,scope=arm64-backend
 
@@ -123,13 +137,20 @@ jobs:
         with:
           username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          registry: registry.a3bhub.cloud
+          username: root
+          password: ${{ secrets.GITLAB_TOKEN }}
       - name: Build & push frontend (amd64)
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           platforms: linux/amd64
           push: true
-          tags: ${{ env.DOCKER_USER }}/a3b-frontend:amd64
+          tags: |
+            ${{ env.DOCKER_USER }}/a3b-frontend:amd64
+            registry.a3bhub.cloud/root/a3b-frontend:amd64
           cache-from: type=gha,scope=amd64-frontend
           cache-to: type=gha,mode=max,scope=amd64-frontend
           no-cache-filters: |
@@ -156,13 +177,20 @@ jobs:
         with:
           username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          registry: registry.a3bhub.cloud
+          username: root
+          password: ${{ secrets.GITLAB_TOKEN }}
       - name: Build & push frontend (arm64)
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           platforms: linux/arm64
           push: true
-          tags: ${{ env.DOCKER_USER }}/a3b-frontend:arm64
+          tags: |
+            ${{ env.DOCKER_USER }}/a3b-frontend:arm64
+            registry.a3bhub.cloud/root/a3b-frontend:arm64
           cache-from: type=gha,scope=arm64-frontend
           cache-to: type=gha,mode=max,scope=arm64-frontend
           build-args: |
@@ -183,6 +211,11 @@ jobs:
         with:
           username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
+      - uses: docker/login-action@v3
+        with:
+          registry: registry.a3bhub.cloud
+          username: root
+          password: ${{ secrets.GITLAB_TOKEN }}
 
       - name: Merge backend manifest → :latest
         if: needs.build-backend-amd64.result == 'success' && needs.build-backend-arm64.result == 'success'
