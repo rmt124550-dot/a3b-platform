@@ -9,6 +9,7 @@ export interface User {
   avatarUrl: string | null
   plan: 'free' | 'pro' | 'team'
   role: string
+  emailVerified?: boolean
 }
 
 interface AuthState {
