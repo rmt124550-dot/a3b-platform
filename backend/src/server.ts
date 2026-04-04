@@ -12,7 +12,8 @@ import { historyRouter }    from './routes/history'
 import { dictionaryRouter } from './routes/dictionary'
 import { billingRouter, webhookRouter } from './routes/billing'
 import { adminRouter }      from './routes/admin'
-import { selectorsRouter }
+import { selectorsRouter }   from './routes/selectors'
+import { affiliatesRouter }  from './routes/affiliates'
 import { errorHandler }     from './middleware/errorHandler'
 import { notFound }         from './middleware/notFound'
 import { logger }           from './utils/logger'
@@ -161,7 +162,9 @@ app.use('/api/dictionary', dictionaryRouter)
 app.use('/api/billing/webhook', webhookRouter)
 app.use('/api/billing',    billingRouter)
 app.use('/api/admin',      adminRouter)
-app.use('/api/selectors',  selectorsRouter)   // público — sin auth
+app.use('/api/selectors',
+app.use('/api/affiliates',  affiliatesRouter)
+  selectorsRouter)   // público — sin auth
 
 // ─── Seed de selectores en startup (garantiza requiredPlan actualizado) ────────
 import { seedSelectorsOnStartup } from './routes/selectors'
