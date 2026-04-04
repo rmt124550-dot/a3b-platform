@@ -1,20 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import PlatformLogo from '@/components/PlatformLogos'
-interface PlanConfig {
-  name: string
-  price: string
-  period: string
-  border: string
-  bg: string
-  highlight?: boolean
-  trial?: string
-  features: string[]
-  cta: string
-  href: string
-  ctaStyle: string
-}
-
 
 export const metadata: Metadata = {
   title: 'A3B Narrator — Aprende en tu idioma en cualquier plataforma',
@@ -414,14 +400,13 @@ export default function HomePage() {
       <section className="py-24 px-6 border-t border-white/5">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-black mb-4">Empieza gratis</h2>
-          <p className="text-white/40 mb-2">PRO y Team — 7 días gratis, sin tarjeta requerida</p>
-          <p className="text-white/25 text-sm mb-16">Free incluye Coursera completo. PRO desbloquea YouTube, Udemy, edX y LinkedIn Learning.</p>
+          <p className="text-white/40 mb-16">Free incluye Coursera. PRO desbloquea todas las plataformas — 7 días gratis, sin tarjeta.</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 name:'Free', price:'$0', period:'siempre',
                 border:'border-white/10', bg:'bg-white/2',
-                features:['Coursera — narración completa','Google Translate EN→ES','Todas las plataformas mobile','Sin historial ni diccionario'],
+                features:['Coursera — narración completa','Google Translate EN→ES','Overlay en pantalla','Sin historial ni diccionario'],
                 cta:'Empezar gratis', href:'/register',
                 ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
               },
@@ -429,7 +414,7 @@ export default function HomePage() {
                 name:'Pro', price:'$4.99', period:'/mes',
                 border:'border-[#6366f1]/60', bg:'bg-[#6366f1]/5',
                 highlight:true,
-                trial:'🎁 7 días gratis · Sin tarjeta',
+                badge:'🎁 7 días gratis · Sin tarjeta',
                 features:['YouTube · Udemy · edX · LinkedIn','DeepL — mayor calidad','10 idiomas destino','Historial 30 días','Diccionario personal'],
                 cta:'Probar 7 días gratis', href:'/register?plan=pro',
                 ctaStyle:'bg-[#6366f1] text-white hover:bg-[#5558e8]',
@@ -437,53 +422,12 @@ export default function HomePage() {
               {
                 name:'Team', price:'$19.99', period:'/mes',
                 border:'border-white/10', bg:'bg-white/2',
-                trial:'🎁 7 días gratis · Sin tarjeta',
+                badge:'🎁 7 días gratis · Sin tarjeta',
                 features:['Todo lo de Pro','Usuarios ilimitados','Dashboard admin','API access','Soporte prioritario'],
                 cta:'Probar 7 días gratis', href:'/register?plan=team',
                 ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
               },
-              ].map((plan: PlanConfig) => (
-              <div key={plan.name} className={`${plan.bg} border ${plan.border} rounded-2xl p-8 relative`}>
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6366f1] text-[10px] font-black tracking-widest text-white px-3 py-1 rounded-full">
-                    MÁS POPULAR
-                  </div>
-                )}
-                <div className="font-black text-xl mb-1">{plan.name}</div>
-                <div className="text-4xl font-black mb-1">
-                  {plan.price}<span className="text-sm font-normal text-white/35">{plan.period}</span>
-                </div>
-                {plan.trial && (
-                  <div className="text-xs text-emerald-400 font-semibold mb-5">{plan.trial}</div>
-                )}
-                {!plan.trial && <div className="mb-6" />}
-                <ul className="space-y-2.5 text-sm text-white/55 text-left mb-8">
-                  {plan.features.map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span className="text-emerald-400 flex-shrink-0">✓</span> {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={plan.href}
-                  className={`block w-full py-3 rounded-xl text-sm font-bold text-center transition-all hover:opacity-90 ${plan.ctaStyle}`}>
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>al','Sin límites'],
-                cta:'Elegir Pro', href:'/pricing',
-                ctaStyle:'bg-[#6366f1] text-white hover:bg-[#5558e8]',
-              },
-              {
-                name:'Team', price:'$19.99', period:'/mes',
-                border:'border-white/10', bg:'bg-white/2',
-                features:['Todo lo de Pro','Usuarios ilimitados','Dashboard admin','API access','Soporte prioritario'],
-                cta:'Elegir Team', href:'/pricing',
-                ctaStyle:'border border-white/12 text-white/60 hover:border-white/25',
-              },
-              ].map((plan: PlanConfig) => (
+            ].map(plan => (
               <div key={plan.name} className={`${plan.bg} border ${plan.border} rounded-2xl p-8 relative`}>
                 {plan.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#6366f1] text-[10px] font-black px-3 py-1 rounded-full tracking-wider">
@@ -491,9 +435,12 @@ export default function HomePage() {
                   </div>
                 )}
                 <div className="font-black text-xl mb-1">{plan.name}</div>
-                <div className="text-4xl font-black mb-6">
+                <div className="text-4xl font-black mb-2">
                   {plan.price}<span className="text-sm font-normal text-white/35">{plan.period}</span>
                 </div>
+                {(plan as {badge?:string}).badge && (
+                  <div className="text-xs text-emerald-400 font-semibold mb-4">{(plan as {badge?:string}).badge}</div>
+                )}
                 <ul className="space-y-2.5 text-sm text-white/55 text-left mb-8">
                   {plan.features.map(f => (
                     <li key={f} className="flex items-center gap-2">
