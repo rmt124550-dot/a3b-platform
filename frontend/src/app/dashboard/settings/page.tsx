@@ -94,10 +94,10 @@ export default function SettingsPage() {
 
   const update = (key: keyof Settings, val: any) => setSettings(s => ({ ...s, [key]: val }))
 
-  if (loading) return <div className="p-8 text-white/30 text-sm">Cargando...</div>
+  if (loading) return <div className="p-4 md:p-8 text-white/30 text-sm">Cargando...</div>
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-8 animate-fadeup">
         <h1 className="font-serif text-3xl mb-1">Configuración</h1>
         <p className="text-sm text-white/40">Personaliza tu experiencia de narración</p>
