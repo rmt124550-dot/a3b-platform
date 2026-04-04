@@ -155,24 +155,16 @@ affiliatesRouter.post('/:id/payout',
       const { id } = req.params
       const { amount, method, reference } = req.body
 
-      const [payout, aff] = await prisma.$transaction([
-        prisma.affiliatePayout.create({
-          data: {
-            affiliateId: id, amount, method, status: 'paid',
-            reference, paidAt: new Date(),
-          },
-        }),
-        prisma.affiliate.update({
-          where: { id },
-          data: {
-            totalPaid:     { increment: amount },
-            pendingAmount: { decrement: amount },
-          },
-        }),
-      ])
+      const payout = await prisma.affiliatePayout.create({
+        data: { affiliateId: id, amount, method, status: 'paid', reference, paidAt: new Date() },
+      })
+      await prisma.affiliate.update({
+        where: { id },
+        data:  { totalPaid: { increment: amount }, pendingAmount: { decrement: amount } },
+      })
 
       logger.info({ event: 'AFFILIATE_PAYOUT', affiliateId: id, amount, method })
-      res.json({ ok: true, payout })
+      res.json({ ok: true, payout: payout })
     } catch (err) { next(err) }
   }
 )
