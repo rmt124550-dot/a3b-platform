@@ -35,11 +35,11 @@ export default function DashboardPage() {
   const greeting = hour < 13 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches'
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 md:p-8 max-w-4xl">
       {/* Header */}
       <div className="mb-10 animate-fadeup">
         <p className="text-sm text-white/35 font-mono mb-1">{greeting} —</p>
-        <h1 className="font-serif text-4xl">{user?.name ?? 'Usuario'}</h1>
+        <h1 className="font-serif text-3xl md:text-4xl">{user?.name ?? 'Usuario'}</h1>
         <div className="flex items-center gap-3 mt-3">
           <span className={`badge badge-indigo text-[10px] ${user?.plan === 'team' ? 'badge-violet' : ''}`}>
             {plan.label}
