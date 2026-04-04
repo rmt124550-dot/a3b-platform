@@ -57,25 +57,32 @@ const DEFAULT_SELECTORS = [
 ]
 
 async function seedIfEmpty() {
+  // Siempre upsert para garantizar requiredPlan correcto tras migraciones
+  await Promise.all(DEFAULT_SELECTORS.map(s =>
+    prisma.platformSelector.upsert({
+      where:  { platform: s.platform },
+      create: { ...s, selectors: JSON.stringify(s.selectors) },
+      update: {
+        requiredPlan: s.requiredPlan,
+        displayName:  s.displayName,
+        hostPattern:  s.hostPattern,
+        selectors:    JSON.stringify(s.selectors),
+        priority:     s.priority,
+      },
+    })
+  ))
+  logger.info({ event: 'SELECTORS_SEED_OK', count: DEFAULT_SELECTORS.length })
+}
+
+/** Llamado desde server.ts en startup — actualiza DB e invalida caché */
+export async function seedSelectorsOnStartup() {
   try {
-    // Siempre hacer upsert para asegurar que requiredPlan esté actualizado
-    // aunque los registros ya existan de una versión anterior
-    await Promise.all(DEFAULT_SELECTORS.map(s =>
-      prisma.platformSelector.upsert({
-        where:  { platform: s.platform },
-        create: { ...s, selectors: JSON.stringify(s.selectors) },
-        update: {
-          requiredPlan: s.requiredPlan,
-          displayName:  s.displayName,
-          hostPattern:  s.hostPattern,
-          selectors:    JSON.stringify(s.selectors),
-          priority:     s.priority,
-        },
-      })
-    ))
-    logger.info({ event: 'SELECTORS_SEED_OK', count: DEFAULT_SELECTORS.length })
+    await seedIfEmpty()
+    // Invalidar caché Redis para que el próximo GET sirva datos frescos
+    try { await redis.del(CACHE_KEY) } catch {}
+    logger.info({ event: 'SELECTORS_STARTUP_SEED_DONE' })
   } catch (err: any) {
-    logger.warn({ event: 'SELECTORS_SEED_SKIP', error: err.message })
+    logger.warn({ event: 'SELECTORS_STARTUP_SEED_FAILED', error: err.message })
   }
 }
 
