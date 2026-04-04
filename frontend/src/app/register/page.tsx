@@ -1,7 +1,8 @@
+import { Suspense } from 'react'
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth-store'
@@ -12,8 +13,10 @@ const PLANS = [
   { id: 'team', label: 'Team', price: '$19.99/mes', desc: 'Todo PRO · Admin · API' },
 ]
 
-export default function RegisterPage() {
-  const router = useRouter()
+function RegisterContent() {
+  const router     = useRouter()
+  const searchParams = useSearchParams()
+  const affiliateRef = searchParams.get('ref') ?? ''
   const setAuth = useAuthStore((s) => s.setAuth)
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [plan, setPlan] = useState('free')
@@ -23,7 +26,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data } = await api.post('/api/auth/register', form)
+      const { data } = await api.post('/api/auth/register', { ...form, ...(affiliateRef ? { affiliateCode: affiliateRef } : {}) })
       setAuth(data.user, data.accessToken, data.refreshToken)
 
       // Mostrar mensaje de verificación de email
@@ -136,5 +139,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface flex items-center justify-center"><div className="text-white/30 text-sm">Cargando...</div></div>}>
+      <RegisterContent />
+    </Suspense>
   )
 }
