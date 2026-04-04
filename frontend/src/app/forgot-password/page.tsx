@@ -1,90 +1,80 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { api } from '@/lib/api'
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail]     = useState('')
-  const [sent, setSent]       = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
+  const [email,    setEmail]   = useState('')
+  const [loading,  setLoading] = useState(false)
+  const [sent,     setSent]    = useState(false)
+  const [error,    setError]   = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
-    setError('')
+    if (!email) return
+    setLoading(true); setError('')
     try {
-      const r = await fetch(
-        (process.env.NEXT_PUBLIC_API_URL ?? 'https://api.a3bhub.cloud') + '/api/user/forgot-password',
-        {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ email }),
-        }
-      )
-      // Siempre mostrar éxito (anti-enumeración)
+      await api.post('/api/auth/forgot-password', { email })
       setSent(true)
     } catch {
-      setSent(true)
-    } finally {
-      setLoading(false)
-    }
+      setError('Error al enviar el email. Inténtalo de nuevo.')
+    } finally { setLoading(false) }
   }
 
+  if (sent) return (
+    <main className="min-h-screen bg-surface grain flex items-center justify-center px-4">
+      <div className="card p-10 max-w-md w-full text-center">
+        <div className="text-5xl mb-4">📬</div>
+        <h1 className="text-xl font-black mb-2">Revisa tu email</h1>
+        <p className="text-white/45 text-sm mb-6">
+          Si ese email existe en nuestra plataforma, recibirás un link para restablecer tu contraseña en los próximos minutos.
+        </p>
+        <p className="text-white/25 text-xs mb-6">No olvides revisar la carpeta de spam.</p>
+        <Link href="/login" className="text-[#6366f1] text-sm hover:underline">← Volver al login</Link>
+      </div>
+    </main>
+  )
+
   return (
-    <main className="min-h-screen bg-[#080810] text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <span className="text-3xl">🔊</span>
-            <span className="font-black text-xl">A3B<span className="text-[#6366f1]"> Narrator</span></span>
-          </Link>
+    <main className="min-h-screen bg-surface grain flex items-center justify-center px-4 py-12">
+      <div className="card p-8 max-w-md w-full">
+        <div className="text-center mb-8">
+          <span className="text-3xl">🔐</span>
+          <h1 className="text-xl font-black mt-3 mb-1">Recuperar contraseña</h1>
+          <p className="text-white/40 text-sm">
+            Ingresa tu email y te enviaremos un link para restablecerla.
+          </p>
         </div>
 
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-8">
-          {sent ? (
-            <div className="text-center py-4">
-              <div className="text-4xl mb-4">📧</div>
-              <h2 className="text-xl font-bold mb-3">Revisa tu email</h2>
-              <p className="text-white/50 text-sm leading-relaxed">
-                Si existe una cuenta con <strong className="text-white/70">{email}</strong>,
-                recibirás un enlace para restablecer tu contraseña en los próximos minutos.
-              </p>
-              <Link href="/login"
-                className="inline-block mt-6 text-[#6366f1] hover:text-[#8b5cf6] text-sm font-medium">
-                ← Volver al login
-              </Link>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
+              Email
+            </label>
+            <input
+              type="email" required
+              value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              className="input w-full"
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-red-400 text-xs">
+              {error}
             </div>
-          ) : (
-            <>
-              <h1 className="text-xl font-bold mb-1">Recuperar contraseña</h1>
-              <p className="text-white/40 text-sm mb-6">
-                Ingresa tu email y te enviaremos un enlace para restablecerla.
-              </p>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email" required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="tu@email.com"
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#6366f1] transition-colors"
-                  />
-                </div>
-                {error && <p className="text-red-400 text-xs">{error}</p>}
-                <button
-                  type="submit" disabled={loading}
-                  className="w-full bg-[#6366f1] hover:bg-[#5558e8] disabled:opacity-50 text-white font-semibold py-3 rounded-lg text-sm transition-all">
-                  {loading ? 'Enviando...' : 'Enviar enlace de recuperación →'}
-                </button>
-              </form>
-              <p className="text-center text-sm text-white/30 mt-4">
-                <Link href="/login" className="hover:text-white/60 transition-colors">← Volver al login</Link>
-              </p>
-            </>
           )}
+
+          <button type="submit" disabled={loading}
+            className="btn-primary w-full py-3 disabled:opacity-60">
+            {loading ? 'Enviando...' : 'Enviar link de recuperación'}
+          </button>
+        </form>
+
+        <div className="text-center mt-6">
+          <Link href="/login" className="text-white/35 text-sm hover:text-white/60">
+            ← Volver al login
+          </Link>
         </div>
       </div>
     </main>
