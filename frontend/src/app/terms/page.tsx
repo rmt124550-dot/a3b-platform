@@ -65,9 +65,10 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-white font-bold text-base mb-3">6. Propiedad intelectual</h2>
-            <p>El código fuente de la extensión de navegador está disponible bajo licencia <a href="https://github.com/rmt124550-dot/a3b-coursera-voice-narrator/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">MIT en GitHub</a>.</p>
-            <p className="mt-2">El backend, la plataforma web, la marca A3B Narrator y todos los activos asociados son propiedad exclusiva de A3B Cloud y están protegidos por derechos de autor. Todos los derechos reservados.</p>
+            <h2 className="text-white font-bold text-base mb-3">6. Propiedad intelectual y licencias</h2>
+            <p><strong className="text-white/80">Extensión de navegador (MIT):</strong> El código fuente de la extensión está disponible bajo la <a href="https://github.com/rmt124550-dot/a3b-coursera-voice-narrator/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">licencia MIT en GitHub</a>. Puedes usarlo, modificarlo y distribuirlo libremente.</p>
+            <p className="mt-3"><strong className="text-white/80">Plataforma y backend (SSPL v1):</strong> El código del backend, la API y la plataforma web se publican bajo la <a href="https://github.com/rmt124550-dot/a3b-platform/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Server Side Public License (SSPL) v1</a>, similar a la usada por MongoDB. Puedes ver el código y hacer self-hosting para uso personal. Si ofreces el backend como servicio a terceros, debes publicar todo tu stack bajo la misma licencia.</p>
+            <p className="mt-3">La marca <strong className="text-white/80">A3B Narrator</strong>, el logo y los activos de branding son propiedad exclusiva de A3B Cloud. Todos los derechos reservados.</p>
           </section>
 
           <section>
