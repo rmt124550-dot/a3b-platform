@@ -23,7 +23,7 @@ export default function PricingPage() {
     // Si tiene centavos distintos de .00, mostrarlos
     const cents = price % 1
     if (cents > 0.001) return price.toFixed(2)
-    return price.toFixed(0)
+    return price % 1 > 0.001 ? price.toFixed(2) : Math.round(price).toString()
   }
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
   const [loading, setLoading] = useState<string | null>(null)
