@@ -355,4 +355,109 @@ authRouter.post('/resend-verification', authLimiter, authenticate, async (req, r
     next(err)
   }
 })
+// ─── POST /api/auth/forgot-password ──────────────────────────────────────────
+authRouter.post('/forgot-password', authLimiter, async (req, res, next) => {
+  try {
+    const { email } = req.body
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Email requerido.' })
+    }
+
+    // Siempre responder 200 para no revelar si el email existe (anti-enumeration)
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } })
+
+    if (user && !user.deletedAt) {
+      const crypto      = await import('crypto')
+      const resetToken  = crypto.randomBytes(32).toString('hex')
+      const expires     = new Date(Date.now() + 60 * 60 * 1000) // 1 hora
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data:  { resetToken, resetTokenExpires: expires },
+      })
+
+      // Enviar email con el link de reset
+      const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`
+      const { sendEmail } = await import('../services/email')
+      sendEmail({
+        to:      user.email,
+        subject: '🔐 Restablecer contraseña — A3B Narrator',
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0a0a15;color:#e0e0e0;padding:32px;border-radius:12px;">
+            <h2 style="color:#fff;margin:0 0 8px">Restablecer contraseña</h2>
+            <p style="color:#888;margin:0 0 24px;font-size:14px">
+              Recibimos una solicitud para restablecer la contraseña de <strong style="color:#e0e0e0">${user.email}</strong>.
+            </p>
+            <a href="${resetUrl}" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;font-size:14px;">
+              Restablecer contraseña
+            </a>
+            <p style="color:#555;font-size:12px;margin:24px 0 0">
+              Este link expira en <strong style="color:#888">1 hora</strong>. Si no solicitaste esto, ignora este email.
+            </p>
+            <p style="color:#555;font-size:11px;margin:8px 0 0">
+              O copia este link: ${resetUrl}
+            </p>
+          </div>
+        `,
+      }).catch(() => {})
+
+      securityLog('PASSWORD_RESET_REQUESTED', { userId: user.id, ip: req.ip })
+    }
+
+    res.json({ ok: true, message: 'Si ese email existe, recibirás instrucciones en breve.' })
+  } catch (err) { next(err) }
+})
+
+// ─── POST /api/auth/reset-password ───────────────────────────────────────────
+authRouter.post('/reset-password', authLimiter, async (req, res, next) => {
+  try {
+    const { token, password } = req.body
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'Token requerido.' })
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' })
+    }
+    if (!/[A-Z]/.test(password)) {
+      return res.status(400).json({ error: 'La contraseña debe contener al menos una mayúscula.' })
+    }
+    if (!/[0-9]/.test(password)) {
+      return res.status(400).json({ error: 'La contraseña debe contener al menos un número.' })
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken:        token,
+        resetTokenExpires: { gt: new Date() },
+        deletedAt:         null,
+      },
+    })
+
+    if (!user) {
+      return res.status(400).json({
+        error: 'Token inválido o expirado. Solicita un nuevo link.',
+        code:  'INVALID_RESET_TOKEN',
+      })
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12)
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        resetToken:        null,
+        resetTokenExpires: null,
+      },
+    })
+
+    // Revocar TODAS las sesiones activas por seguridad
+    const keys = await redis.keys(`refresh:${user.id}:*`)
+    if (keys.length > 0) await redis.del(...keys)
+
+    auditLog('PASSWORD_RESET_COMPLETED', user.id, { ip: req.ip })
+    res.json({ ok: true, message: 'Contraseña actualizada correctamente. Ya puedes iniciar sesión.' })
+  } catch (err) { next(err) }
+})
 
