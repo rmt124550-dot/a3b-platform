@@ -5,6 +5,13 @@ import Link from 'next/link'
 export default function PricingSection() {
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
 
+  function fmtPrice(n: number): string {
+    if (n === 0) return '0'
+    return n % 1 > 0.001 ? n.toFixed(2) : n.toFixed(0)
+  }
+
+
+
   const plans = [
     {
       id: 'trial',
@@ -122,17 +129,17 @@ export default function PricingSection() {
                 <div className="mb-4">
                   {isAnnual && (
                     <div className="flex items-center justify-center gap-2 mb-1.5">
-                      <span className="text-white/25 line-through text-sm">${plan.monthly}/mes</span>
+                      <span className="text-white/25 line-through text-sm">${fmtPrice(plan.monthly)}/mes</span>
                       <span className="text-[10px] bg-red-500/15 text-red-400 border border-red-500/25 px-1.5 py-0.5 rounded-full font-bold">
                         -{plan.savings}
                       </span>
                     </div>
                   )}
-                  <span className="text-4xl font-black">${price.toFixed(0)}</span>
+                  <span className="text-4xl font-black">${fmtPrice(price)}</span>
                   <span className="text-white/35 text-sm ml-1">{isAnnual ? '/año' : '/mes'}</span>
                   {isAnnual && plan.annualMonthly && (
                     <div className="flex justify-center items-center gap-1.5 mt-1.5">
-                      <span className="text-emerald-400 font-bold text-sm">${plan.annualMonthly}/mes equiv.</span>
+                      <span className="text-emerald-400 font-bold text-sm">${fmtPrice(plan.annualMonthly)}/mes equiv.</span>
                     </div>
                   )}
                   {isAnnual && plan.annualBadge ? (
