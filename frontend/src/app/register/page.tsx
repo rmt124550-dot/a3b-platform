@@ -25,14 +25,17 @@ export default function RegisterPage() {
     try {
       const { data } = await api.post('/api/auth/register', form)
       setAuth(data.user, data.accessToken, data.refreshToken)
-      toast.success('¡Cuenta creada!')
+
+      // Mostrar mensaje de verificación de email
+      toast.success('¡Cuenta creada! Revisa tu email para verificarla.', { duration: 6000 })
 
       if (plan !== 'free') {
         // Redirect to Stripe checkout
         const { data: checkout } = await api.post('/api/billing/checkout', { plan })
         window.location.href = checkout.url
       } else {
-        router.push('/dashboard')
+        // Ir al dashboard con banner de verificación
+        router.push('/dashboard?verify=1')
       }
     } catch (err: any) {
       toast.error(err.response?.data?.error ?? 'Error al crear la cuenta')
