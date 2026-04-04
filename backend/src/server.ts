@@ -162,9 +162,8 @@ app.use('/api/dictionary', dictionaryRouter)
 app.use('/api/billing/webhook', webhookRouter)
 app.use('/api/billing',    billingRouter)
 app.use('/api/admin',      adminRouter)
-app.use('/api/selectors',
+app.use('/api/selectors',   selectorsRouter)
 app.use('/api/affiliates',  affiliatesRouter)
-  selectorsRouter)   // público — sin auth
 
 // ─── Seed de selectores en startup (garantiza requiredPlan actualizado) ────────
 import { seedSelectorsOnStartup } from './routes/selectors'
