@@ -484,20 +484,46 @@ export default function HomePage() {
 
       {/* ── Footer ────────────────────────────────── */}
       <footer className="border-t border-white/5 py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">🔊</span>
-            <span className="font-black text-sm">A3B Narrator</span>
-            <span className="text-white/20 text-xs">v3.2</span>
+        <div className="max-w-6xl mx-auto space-y-8">
+
+          {/* Fila principal */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">🔊</span>
+              <span className="font-black text-sm">A3B Narrator</span>
+              <span className="text-white/20 text-xs ml-1">by A3B Cloud</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-white/30 text-sm">
+              <a href="#platforms" className="hover:text-white/60 transition-colors">Plataformas</a>
+              <a href="#pricing" className="hover:text-white/60 transition-colors">Precios</a>
+              <Link href="/login" className="hover:text-white/60 transition-colors">Login</Link>
+              <Link href="/register" className="hover:text-white/60 transition-colors">Registro</Link>
+              <a href="mailto:hello@a3bhub.cloud" className="hover:text-white/60 transition-colors">Contacto</a>
+            </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-white/30 text-sm">
-            <a href="#platforms" className="hover:text-white/60 transition-colors">Plataformas</a>
-            <a href="#demo" className="hover:text-white/60 transition-colors">Demo</a>
-            <Link href="/pricing" className="hover:text-white/60 transition-colors">Precios</Link>
-            <Link href="/login" className="hover:text-white/60 transition-colors">Login</Link>
-            <Link href="/register" className="hover:text-white/60 transition-colors">Registro</Link>
+
+          {/* Línea divisoria */}
+          <div className="border-t border-white/5" />
+
+          {/* Fila legal */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/20 text-xs">
+            <div>© 2026 A3B Cloud. Todos los derechos reservados.</div>
+            <div className="flex gap-6">
+              <Link href="/privacy" className="hover:text-white/50 transition-colors">
+                Política de Privacidad
+              </Link>
+              <Link href="/terms" className="hover:text-white/50 transition-colors">
+                Términos de Uso
+              </Link>
+              <a
+                href="https://github.com/rmt124550-dot/a3b-coursera-voice-narrator/blob/main/LICENSE"
+                target="_blank" rel="noopener noreferrer"
+                className="hover:text-white/50 transition-colors">
+                Extensión MIT
+              </a>
+            </div>
           </div>
-          <div className="text-white/20 text-xs">© 2026 A3B Cloud — MIT License</div>
+
         </div>
       </footer>
 
