@@ -22,6 +22,28 @@ function Slider({ label, value, min, max, step, onChange, format }: {
   label: string; value: number; min: number; max: number; step: number
   onChange: (v: number) => void; format: (v: number) => string
 }) {
+
+  // ─── Cambiar contraseña ──────────────────────────────────────
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError,   setPwError]   = useState('')
+
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault()
+    if (pwForm.newPassword !== pwForm.confirm) { setPwError('Las contraseñas no coinciden'); return }
+    if (pwForm.newPassword.length < 8) { setPwError('Mínimo 8 caracteres'); return }
+    setPwLoading(true); setPwError('')
+    try {
+      await api.patch('/api/auth/password', {
+        currentPassword: pwForm.currentPassword,
+        newPassword:     pwForm.newPassword,
+      })
+      toast.success('Contraseña actualizada. Inicia sesión de nuevo.')
+      setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
+    } catch (err: any) {
+      setPwError(err.response?.data?.error ?? 'Error al cambiar la contraseña')
+    } finally { setPwLoading(false) }
+  }
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -36,6 +58,33 @@ function Slider({ label, value, min, max, step, onChange, format }: {
       />
       <div className="flex justify-between text-[10px] text-white/20 mt-1 font-mono">
         <span>{min}</span><span>{max}</span>
+      </div>
+
+      {/* ── Cambiar contraseña ──────────────── */}
+      <div className="card p-6 mt-6">
+        <h2 className="font-bold text-sm mb-4">Cambiar contraseña</h2>
+        <form onSubmit={handlePasswordChange} className="space-y-3">
+          <input type="password" required
+            value={pwForm.currentPassword}
+            onChange={e => setPwForm(f => ({...f, currentPassword: e.target.value}))}
+            placeholder="Contraseña actual"
+            className="input w-full text-sm py-2" />
+          <input type="password" required minLength={8}
+            value={pwForm.newPassword}
+            onChange={e => setPwForm(f => ({...f, newPassword: e.target.value}))}
+            placeholder="Nueva contraseña (mín. 8 caracteres)"
+            className="input w-full text-sm py-2" />
+          <input type="password" required
+            value={pwForm.confirm}
+            onChange={e => setPwForm(f => ({...f, confirm: e.target.value}))}
+            placeholder="Repetir nueva contraseña"
+            className="input w-full text-sm py-2" />
+          {pwError && <p className="text-red-400 text-xs">{pwError}</p>}
+          <button type="submit" disabled={pwLoading}
+            className="btn-primary text-sm py-2.5 px-6 w-full sm:w-auto disabled:opacity-60">
+            {pwLoading ? 'Actualizando...' : 'Cambiar contraseña'}
+          </button>
+        </form>
       </div>
     </div>
   )
@@ -65,7 +114,29 @@ export default function SettingsPage() {
     }
     loadVoices()
     window.speechSynthesis?.addEventListener('voiceschanged', loadVoices)
-    return () => window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices)
+  
+  // ─── Cambiar contraseña ──────────────────────────────────────
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError,   setPwError]   = useState('')
+
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault()
+    if (pwForm.newPassword !== pwForm.confirm) { setPwError('Las contraseñas no coinciden'); return }
+    if (pwForm.newPassword.length < 8) { setPwError('Mínimo 8 caracteres'); return }
+    setPwLoading(true); setPwError('')
+    try {
+      await api.patch('/api/auth/password', {
+        currentPassword: pwForm.currentPassword,
+        newPassword:     pwForm.newPassword,
+      })
+      toast.success('Contraseña actualizada. Inicia sesión de nuevo.')
+      setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
+    } catch (err: any) {
+      setPwError(err.response?.data?.error ?? 'Error al cambiar la contraseña')
+    } finally { setPwLoading(false) }
+  }
+  return () => window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices)
   }, [])
 
   async function save() {
@@ -96,6 +167,28 @@ export default function SettingsPage() {
 
   if (loading) return <div className="p-4 md:p-8 text-white/30 text-sm">Cargando...</div>
 
+
+  // ─── Cambiar contraseña ──────────────────────────────────────
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError,   setPwError]   = useState('')
+
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault()
+    if (pwForm.newPassword !== pwForm.confirm) { setPwError('Las contraseñas no coinciden'); return }
+    if (pwForm.newPassword.length < 8) { setPwError('Mínimo 8 caracteres'); return }
+    setPwLoading(true); setPwError('')
+    try {
+      await api.patch('/api/auth/password', {
+        currentPassword: pwForm.currentPassword,
+        newPassword:     pwForm.newPassword,
+      })
+      toast.success('Contraseña actualizada. Inicia sesión de nuevo.')
+      setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
+    } catch (err: any) {
+      setPwError(err.response?.data?.error ?? 'Error al cambiar la contraseña')
+    } finally { setPwLoading(false) }
+  }
   return (
     <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-8 animate-fadeup">
@@ -206,6 +299,33 @@ export default function SettingsPage() {
         <button onClick={save} disabled={saving} className="btn-primary w-full h-11 text-sm">
           {saving ? 'Guardando...' : 'Guardar configuración'}
         </button>
+      </div>
+
+      {/* ── Cambiar contraseña ──────────────── */}
+      <div className="card p-6 mt-6">
+        <h2 className="font-bold text-sm mb-4">Cambiar contraseña</h2>
+        <form onSubmit={handlePasswordChange} className="space-y-3">
+          <input type="password" required
+            value={pwForm.currentPassword}
+            onChange={e => setPwForm(f => ({...f, currentPassword: e.target.value}))}
+            placeholder="Contraseña actual"
+            className="input w-full text-sm py-2" />
+          <input type="password" required minLength={8}
+            value={pwForm.newPassword}
+            onChange={e => setPwForm(f => ({...f, newPassword: e.target.value}))}
+            placeholder="Nueva contraseña (mín. 8 caracteres)"
+            className="input w-full text-sm py-2" />
+          <input type="password" required
+            value={pwForm.confirm}
+            onChange={e => setPwForm(f => ({...f, confirm: e.target.value}))}
+            placeholder="Repetir nueva contraseña"
+            className="input w-full text-sm py-2" />
+          {pwError && <p className="text-red-400 text-xs">{pwError}</p>}
+          <button type="submit" disabled={pwLoading}
+            className="btn-primary text-sm py-2.5 px-6 w-full sm:w-auto disabled:opacity-60">
+            {pwLoading ? 'Actualizando...' : 'Cambiar contraseña'}
+          </button>
+        </form>
       </div>
     </div>
   )
