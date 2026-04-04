@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/auth-store'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
 import VerifyEmailBanner from '@/components/VerifyEmailBanner'
+import TrialBanner       from '@/components/TrialBanner'
 
 const NAV = [
   { href: '/dashboard',            icon: '◈', label: 'Overview' },
@@ -166,6 +167,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {user && !user.emailVerified && (
           <div className="px-4 md:px-8 pt-4">
             <VerifyEmailBanner email={user.email ?? ''} />
+          </div>
+        )}
+        {user && (user.trialExpired || (user.trialDaysLeft !== null && user.trialDaysLeft !== undefined)) && (
+          <div className="px-4 md:px-8 pt-4">
+            <TrialBanner
+              daysLeft={user.trialDaysLeft ?? null}
+              expired={user.trialExpired ?? false}
+              plan={user.plan}
+            />
           </div>
         )}
 
