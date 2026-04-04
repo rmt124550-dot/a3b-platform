@@ -123,40 +123,42 @@ billingRouter.get('/plans', (_req, res) => {
   res.json({
     plans: [
       {
-        id: 'free', name: 'Free', price: 0, currency: 'usd',
+        id: 'trial', name: '🎁 Prueba 36 días', price: 0, currency: 'usd',
         interval: '36 días', priceId: null,
+        trial_days: 36, trial_no_card: true,
         features: [
           'Coursera — narración completa',
+          'YouTube · Udemy · edX · LinkedIn Learning',
+          'Khan Academy · DataCamp',
           'Google Translate EN → ES',
           'Web Speech API nativa del navegador',
           'Overlay de subtítulos en pantalla',
-          'Kiwi Browser + Firefox Android',
         ],
+        note: 'Sin tarjeta. Al día 37 debes activar PRO para continuar.',
       },
       {
-        id: 'pro', name: 'Pro', price: 4.99, currency: 'usd',
-        interval: 'month', priceId: PLANS.pro.priceId,
+        id: 'pro', name: 'Pro', price: 4.99, currency: 'usd', interval: 'month',
+        priceId: PLANS.pro.priceId,
         annualPrice: 39.99, annualPriceId: PLANS.pro_annual.priceId,
         annualMonthly: 3.33, savings: '33%', annualBadge: '🔥 2 meses gratis',
         trial_days: 36, trial_no_card: true,
         features: [
-          '7 días gratis — sin tarjeta',
-          'YouTube · Udemy · edX · LinkedIn Learning',
+          '36 días gratis incluidos — sin tarjeta',
+          'Todas las plataformas ilimitadas',
           'DeepL — traducción de mayor calidad',
           '10 idiomas de destino',
           'Historial de frases (30 días)',
           'Diccionario personal técnico',
-          'Sincronización en la nube',
         ],
       },
       {
-        id: 'team', name: 'Team', price: 19.99, currency: 'usd',
-        interval: 'month', priceId: PLANS.team.priceId,
+        id: 'team', name: 'Team', price: 19.99, currency: 'usd', interval: 'month',
+        priceId: PLANS.team.priceId,
         annualPrice: 199.99, annualPriceId: PLANS.team_annual.priceId,
         annualMonthly: 16.67, savings: '17%', annualBadge: '💎 2 meses gratis',
         trial_days: 36, trial_no_card: true,
         features: [
-          '7 días gratis — sin tarjeta',
+          '36 días gratis incluidos — sin tarjeta',
           'Todo lo de Pro',
           'Usuarios ilimitados',
           'Dashboard de administración',
@@ -166,6 +168,7 @@ billingRouter.get('/plans', (_req, res) => {
       },
     ],
   })
+})
 })
 
 // ─── POST /api/billing/checkout ───────────────────────────────────────────────
