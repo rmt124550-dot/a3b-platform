@@ -122,7 +122,13 @@ authRouter.post('/login', authLimiter, validate(loginSchema), async (req, res, n
     const { email, password } = req.body
     const ip = req.ip ?? 'unknown'
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    const user = await prisma.user.findUnique({
+      where:  { email },
+      select: {
+        id: true, email: true, name: true, passwordHash: true,
+        plan: true, role: true, emailVerified: true, deletedAt: true, lastLoginAt: true,
+      }
+    })
 
     // Siempre ejecutar bcrypt (timing attack prevention)
     const passwordToCheck = user?.passwordHash ?? '$2a$12$invalidhashfortimingprotect000000'
@@ -151,6 +157,7 @@ authRouter.post('/login', authLimiter, validate(loginSchema), async (req, res, n
       user: {
         id: user.id, email: user.email,
         name: user.name, plan: user.plan, role: user.role,
+        emailVerified: user.emailVerified,
       },
       accessToken,
       refreshToken,
