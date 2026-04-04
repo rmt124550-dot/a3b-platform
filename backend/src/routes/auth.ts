@@ -88,6 +88,7 @@ authRouter.post('/register', authLimiter, validate(registerSchema), async (req, 
         emailVerifyToken: verifyToken,
         emailVerified:    false,
         affiliateCode:    affiliateCode ?? null,
+        trialEndsAt:      new Date(Date.now() + 36 * 24 * 60 * 60 * 1000),
         settings: { create: {} },
       },
       select: {
@@ -128,7 +129,8 @@ authRouter.post('/login', authLimiter, validate(loginSchema), async (req, res, n
       where:  { email },
       select: {
         id: true, email: true, name: true, passwordHash: true,
-        plan: true, role: true, emailVerified: true, deletedAt: true, lastLoginAt: true,
+        plan: true, role: true, emailVerified: true,
+        trialEndsAt: true, deletedAt: true, lastLoginAt: true,
       }
     })
 
@@ -155,11 +157,22 @@ authRouter.post('/login', authLimiter, validate(loginSchema), async (req, res, n
 
     auditLog('USER_LOGIN', user.id, { ip, email })
 
+    const nowL         = new Date()
+    const trialExpiredL  = user.trialEndsAt ? nowL > user.trialEndsAt : false
+    const trialDaysLeftL = user.trialEndsAt
+      ? Math.max(0, Math.ceil((user.trialEndsAt.getTime() - nowL.getTime()) / (1000 * 60 * 60 * 24)))
+      : null
+    const isProL = user.plan === 'pro' || user.plan === 'team'
+
     res.json({
       user: {
         id: user.id, email: user.email,
         name: user.name, plan: user.plan, role: user.role,
-        emailVerified: user.emailVerified,
+        emailVerified:  user.emailVerified,
+        trialEndsAt:    user.trialEndsAt,
+        trialExpired:   isProL ? false : trialExpiredL,
+        trialDaysLeft:  isProL ? null  : trialDaysLeftL,
+        isActive:       isProL || !trialExpiredL,
       },
       accessToken,
       refreshToken,
@@ -238,12 +251,29 @@ authRouter.get('/me', authenticate, async (req, res, next) => {
       select: {
         id: true, email: true, name: true, avatarUrl: true,
         plan: true, role: true, emailVerified: true,
+        trialEndsAt: true,
         createdAt: true, lastLoginAt: true,
         settings: true,
       },
     })
     if (!user) return res.status(404).json({ error: 'User not found' })
-    res.json({ user })
+
+    // Calcular estado del trial
+    const now          = new Date()
+    const trialExpired = user.trialEndsAt ? now > user.trialEndsAt : false
+    const trialDaysLeft = user.trialEndsAt
+      ? Math.max(0, Math.ceil((user.trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+      : null
+    const isPro = user.plan === 'pro' || user.plan === 'team'
+
+    res.json({
+      user: {
+        ...user,
+        trialExpired:  isPro ? false : trialExpired,
+        trialDaysLeft: isPro ? null  : trialDaysLeft,
+        isActive:      isPro || !trialExpired,
+      }
+    })
   } catch (err) {
     next(err)
   }
