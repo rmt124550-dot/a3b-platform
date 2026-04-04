@@ -458,6 +458,23 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Afiliados CTA ─────────────────────────────── */}
+      <section className="py-16 px-6 border-t border-white/5">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-emerald-500/8 border border-emerald-500/20 rounded-2xl p-8 flex flex-col md:flex-row items-center gap-6">
+            <div className="text-4xl flex-shrink-0">💰</div>
+            <div className="flex-1 text-center md:text-left">
+              <div className="font-black text-lg mb-1">¿Tienes audiencia educativa?</div>
+              <div className="text-white/40 text-sm">Gana el 30% de comisión por cada usuario PRO que refieras. Sin límite.</div>
+            </div>
+            <Link href="/affiliates"
+              className="flex-shrink-0 bg-emerald-500 text-white font-black px-6 py-3 rounded-xl hover:bg-emerald-400 transition-all text-sm whitespace-nowrap">
+              Ver programa →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA Final ────────────────────────────── */}
       <section className="py-24 px-6 border-t border-white/5">
         <div className="max-w-2xl mx-auto text-center">
@@ -500,6 +517,7 @@ export default function HomePage() {
               <Link href="/register" className="hover:text-white/60 transition-colors">Registro</Link>
               <a href="mailto:hello@a3bhub.cloud" className="hover:text-white/60 transition-colors">Contacto</a>
               <Link href="/help" className="hover:text-white/60 transition-colors">Ayuda</Link>
+              <Link href="/affiliates" className="hover:text-white/60 transition-colors">Afiliados</Link>
             </div>
           </div>
 
@@ -518,6 +536,9 @@ export default function HomePage() {
               </Link>
               <Link href="/help" className="hover:text-white/50 transition-colors">
                 Centro de Ayuda
+              </Link>
+              <Link href="/affiliates" className="hover:text-white/50 transition-colors">
+                Afiliados
               </Link>
               <a
                 href="https://github.com/rmt124550-dot/a3b-platform/blob/main/LICENSE"
