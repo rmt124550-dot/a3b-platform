@@ -4,8 +4,8 @@ import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
   title: 'A3B Narrator — Aprende en Coursera en Español',
-  description: 'Extensión gratuita de Chrome que traduce y narra subtítulos de Coursera en español. Sin API keys. 7 días PRO gratis.',
-  authors: [{ name: 'A3B Cloud', url: 'https://a3bhub.cloud' }],
+  description: 'Extensión gratuita de Chrome que traduce y narra los subtítulos de Coursera en español en tiempo real. Compatible con YouTube, Udemy, edX y LinkedIn Learning.',
+}],
   metadataBase: new URL('https://a3bhub.cloud'),
   openGraph: {
     type: 'website', locale: 'es_ES', url: 'https://a3bhub.cloud',
