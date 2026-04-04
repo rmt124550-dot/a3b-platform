@@ -53,7 +53,7 @@ export default function DictionaryPage() {
 
   if (user?.plan === 'free') {
     return (
-      <div className="p-8 max-w-3xl">
+      <div className="p-4 md:p-8 max-w-3xl">
         <div className="mb-8">
           <h1 className="font-serif text-3xl mb-1">Diccionario personal</h1>
           <p className="text-sm text-white/40">Tus términos técnicos personalizados</p>
@@ -71,7 +71,7 @@ export default function DictionaryPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 md:p-8 max-w-3xl">
       <div className="flex items-start justify-between gap-4 mb-8 animate-fadeup">
         <div>
           <h1 className="font-serif text-3xl mb-1">Diccionario personal</h1>
@@ -86,7 +86,7 @@ export default function DictionaryPage() {
       {showForm && (
         <div className="card p-5 mb-5 animate-fadeup">
           <h3 className="text-xs font-bold text-white/35 uppercase tracking-widest mb-4">Nuevo término</h3>
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
               <label className="block text-xs text-white/40 mb-1.5">Término (original)</label>
               <input className="input text-sm" placeholder="machine learning"
