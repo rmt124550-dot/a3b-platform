@@ -16,6 +16,15 @@ interface Plan {
 
 export default function PricingPage() {
   const [plans,   setPlans]   = useState<Plan[]>([])
+
+  // Formatear precio: muestra decimales solo si son significativos
+  function fmtPrice(price: number): string {
+    if (price === 0) return '0'
+    // Si tiene centavos distintos de .00, mostrarlos
+    const cents = price % 1
+    if (cents > 0.001) return price.toFixed(2)
+    return price.toFixed(0)
+  }
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
   const [loading, setLoading] = useState<string | null>(null)
   const { isAuthenticated } = useAuthStore()
@@ -130,7 +139,7 @@ export default function PricingPage() {
                       </div>
                     )}
                     <div className="flex items-end gap-1">
-                      <span className="text-4xl font-black">${showPrice?.toFixed(0)}</span>
+                      <span className="text-4xl font-black">${fmtPrice(showPrice ?? 0)}</span>
                       <span className="text-white/35 text-sm mb-1">
                         {isAnnual ? '/año' : '/mes'}
                       </span>
