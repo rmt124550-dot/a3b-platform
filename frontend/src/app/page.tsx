@@ -51,7 +51,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-[#080810] text-white overflow-x-hidden" style={{fontFamily:'system-ui,sans-serif'}}>
 
       {/* NAV */}
-      <nav className="fixed top-0 w-full z-50 border-b border-white/5 backdrop-blur-xl bg-[#080810]/90 relative">
+      <nav className="fixed top-0 w-full z-50 border-b border-white/5 backdrop-blur-xl bg-[#080810]/90">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <span className="text-xl sm:text-2xl">🔊</span>
