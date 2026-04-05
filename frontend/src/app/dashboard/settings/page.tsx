@@ -18,32 +18,11 @@ const LANGS = [
   { code: 'ar', name: '🇸🇦 Árabe' },    { code: 'ru', name: '🇷🇺 Ruso' },
 ]
 
+// ─── Componente Slider (sin hooks internos) ──────────────────────────────────
 function Slider({ label, value, min, max, step, onChange, format }: {
   label: string; value: number; min: number; max: number; step: number
   onChange: (v: number) => void; format: (v: number) => string
 }) {
-
-  // ─── Cambiar contraseña ──────────────────────────────────────
-  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
-  const [pwLoading, setPwLoading] = useState(false)
-  const [pwError,   setPwError]   = useState('')
-
-  async function handlePasswordChange(e: React.FormEvent) {
-    e.preventDefault()
-    if (pwForm.newPassword !== pwForm.confirm) { setPwError('Las contraseñas no coinciden'); return }
-    if (pwForm.newPassword.length < 8) { setPwError('Mínimo 8 caracteres'); return }
-    setPwLoading(true); setPwError('')
-    try {
-      await api.patch('/api/auth/password', {
-        currentPassword: pwForm.currentPassword,
-        newPassword:     pwForm.newPassword,
-      })
-      toast.success('Contraseña actualizada. Inicia sesión de nuevo.')
-      setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
-    } catch (err: any) {
-      setPwError(err.response?.data?.error ?? 'Error al cambiar la contraseña')
-    } finally { setPwLoading(false) }
-  }
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
@@ -59,86 +38,46 @@ function Slider({ label, value, min, max, step, onChange, format }: {
       <div className="flex justify-between text-[10px] text-white/20 mt-1 font-mono">
         <span>{min}</span><span>{max}</span>
       </div>
-
-      {/* ── Cambiar contraseña ──────────────── */}
-      <div className="card p-6 mt-6">
-        <h2 className="font-bold text-sm mb-4">Cambiar contraseña</h2>
-        <form onSubmit={handlePasswordChange} className="space-y-3">
-          <input type="password" required
-            value={pwForm.currentPassword}
-            onChange={e => setPwForm(f => ({...f, currentPassword: e.target.value}))}
-            placeholder="Contraseña actual"
-            className="input w-full text-sm py-2" />
-          <input type="password" required minLength={8}
-            value={pwForm.newPassword}
-            onChange={e => setPwForm(f => ({...f, newPassword: e.target.value}))}
-            placeholder="Nueva contraseña (mín. 8 caracteres)"
-            className="input w-full text-sm py-2" />
-          <input type="password" required
-            value={pwForm.confirm}
-            onChange={e => setPwForm(f => ({...f, confirm: e.target.value}))}
-            placeholder="Repetir nueva contraseña"
-            className="input w-full text-sm py-2" />
-          {pwError && <p className="text-red-400 text-xs">{pwError}</p>}
-          <button type="submit" disabled={pwLoading}
-            className="btn-primary text-sm py-2.5 px-6 w-full sm:w-auto disabled:opacity-60">
-            {pwLoading ? 'Actualizando...' : 'Cambiar contraseña'}
-          </button>
-        </form>
-      </div>
     </div>
   )
 }
 
+// ─── Página principal ────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const { user } = useAuthStore()
+
+  // ── Estado de configuración de voz ──────────────────────────────────────
   const [settings, setSettings] = useState<Settings>({
     voiceSpeed: 1, voiceVolume: 1, voicePitch: 1,
     voiceName: null, targetLang: 'es',
     showOverlay: true, translator: 'google',
   })
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+  const [saving,  setSaving]  = useState(false)
+  const [voices,  setVoices]  = useState<SpeechSynthesisVoice[]>([])
 
+  // ── Estado de cambio de contraseña ───────────────────────────────────────
+  const [pwForm,    setPwForm]    = useState({ currentPassword: '', newPassword: '', confirm: '' })
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError,   setPwError]   = useState('')
+
+  // ── Carga inicial ─────────────────────────────────────────────────────────
   useEffect(() => {
     api.get('/api/user/settings').then(({ data }) => {
       setSettings(data.settings)
     }).catch(() => {}).finally(() => setLoading(false))
 
-    // Load browser voices
     const loadVoices = () => {
       const v = window.speechSynthesis?.getVoices() ?? []
-      const spanish = v.filter(v => v.lang.startsWith(settings.targetLang))
+      const spanish = v.filter(voice => voice.lang.startsWith('es'))
       setVoices(spanish.length ? spanish : v.slice(0, 10))
     }
     loadVoices()
     window.speechSynthesis?.addEventListener('voiceschanged', loadVoices)
-  
-  // ─── Cambiar contraseña ──────────────────────────────────────
-  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
-  const [pwLoading, setPwLoading] = useState(false)
-  const [pwError,   setPwError]   = useState('')
-
-  async function handlePasswordChange(e: React.FormEvent) {
-    e.preventDefault()
-    if (pwForm.newPassword !== pwForm.confirm) { setPwError('Las contraseñas no coinciden'); return }
-    if (pwForm.newPassword.length < 8) { setPwError('Mínimo 8 caracteres'); return }
-    setPwLoading(true); setPwError('')
-    try {
-      await api.patch('/api/auth/password', {
-        currentPassword: pwForm.currentPassword,
-        newPassword:     pwForm.newPassword,
-      })
-      toast.success('Contraseña actualizada. Inicia sesión de nuevo.')
-      setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
-    } catch (err: any) {
-      setPwError(err.response?.data?.error ?? 'Error al cambiar la contraseña')
-    } finally { setPwLoading(false) }
-  }
-  return () => window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices)
+    return () => window.speechSynthesis?.removeEventListener('voiceschanged', loadVoices)
   }, [])
 
+  // ── Guardar configuración de voz ─────────────────────────────────────────
   async function save() {
     setSaving(true)
     try {
@@ -148,6 +87,7 @@ export default function SettingsPage() {
     finally { setSaving(false) }
   }
 
+  // ── Probar voz ───────────────────────────────────────────────────────────
   function testVoice() {
     if (!window.speechSynthesis) return toast.error('Tu navegador no soporta TTS')
     window.speechSynthesis.cancel()
@@ -163,16 +103,7 @@ export default function SettingsPage() {
     window.speechSynthesis.speak(u)
   }
 
-  const update = (key: keyof Settings, val: any) => setSettings(s => ({ ...s, [key]: val }))
-
-  if (loading) return <div className="p-4 md:p-8 text-white/30 text-sm">Cargando...</div>
-
-
-  // ─── Cambiar contraseña ──────────────────────────────────────
-  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
-  const [pwLoading, setPwLoading] = useState(false)
-  const [pwError,   setPwError]   = useState('')
-
+  // ── Cambiar contraseña ───────────────────────────────────────────────────
   async function handlePasswordChange(e: React.FormEvent) {
     e.preventDefault()
     if (pwForm.newPassword !== pwForm.confirm) { setPwError('Las contraseñas no coinciden'); return }
@@ -189,16 +120,22 @@ export default function SettingsPage() {
       setPwError(err.response?.data?.error ?? 'Error al cambiar la contraseña')
     } finally { setPwLoading(false) }
   }
+
+  const update = (key: keyof Settings, val: any) => setSettings(s => ({ ...s, [key]: val }))
+
+  if (loading) return <div className="p-4 md:p-8 text-white/30 text-sm">Cargando...</div>
+
   return (
     <div className="p-4 md:p-8 max-w-2xl">
-      <div className="mb-8 animate-fadeup">
-        <h1 className="font-serif text-3xl mb-1">Configuración</h1>
+      <div className="mb-8">
+        <h1 className="text-2xl font-black mb-1">Configuración</h1>
         <p className="text-sm text-white/40">Personaliza tu experiencia de narración</p>
       </div>
 
-      <div className="space-y-5 animate-fadeup delay-100">
-        {/* Voz */}
-        <div className="card p-6">
+      <div className="space-y-5">
+
+        {/* ── Voz ───────────────────────────────────────────── */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
           <h2 className="text-xs font-bold text-white/35 uppercase tracking-widest mb-5">Control de voz</h2>
           <div className="space-y-6">
             <Slider label="Velocidad" value={settings.voiceSpeed} min={0.5} max={2} step={0.1}
@@ -210,29 +147,33 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Idioma y motor */}
-        <div className="card p-6">
+        {/* ── Traducción ─────────────────────────────────────── */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
           <h2 className="text-xs font-bold text-white/35 uppercase tracking-widest mb-5">Traducción</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-white/45 uppercase tracking-wider mb-2">Idioma destino</label>
+              <label className="block text-xs font-semibold text-white/45 uppercase tracking-wider mb-2">
+                Idioma destino
+              </label>
               <select
                 value={settings.targetLang}
                 onChange={(e) => update('targetLang', e.target.value)}
                 disabled={user?.plan === 'free'}
-                className="input text-sm"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#6366f1]/50"
               >
                 {LANGS.map(l => (
                   <option key={l.code} value={l.code}>{l.name}</option>
                 ))}
               </select>
               {user?.plan === 'free' && (
-                <p className="text-xs text-white/30 mt-1.5">Múltiples idiomas requieren plan PRO</p>
+                <p className="text-xs text-white/30 mt-1.5">Múltiples idiomas disponibles con plan PRO</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-white/45 uppercase tracking-wider mb-2">Motor de traducción</label>
+              <label className="block text-xs font-semibold text-white/45 uppercase tracking-wider mb-2">
+                Motor de traducción
+              </label>
               <div className="grid grid-cols-2 gap-2">
                 {(['google', 'deepl'] as const).map((t) => (
                   <button
@@ -241,12 +182,14 @@ export default function SettingsPage() {
                     disabled={t === 'deepl' && user?.plan === 'free'}
                     className={`p-3 rounded-xl border text-sm font-medium transition-all ${
                       settings.translator === t
-                        ? 'border-indigo bg-indigo/10 text-indigo'
+                        ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#a5b4fc]'
                         : 'border-white/8 text-white/40 hover:border-white/20 disabled:opacity-30 disabled:cursor-not-allowed'
                     }`}
                   >
                     {t === 'google' ? '🌐 Google Translate' : '⚡ DeepL PRO'}
-                    {t === 'deepl' && user?.plan === 'free' && <span className="block text-[10px] text-white/25 mt-0.5">Requiere PRO</span>}
+                    {t === 'deepl' && user?.plan === 'free' && (
+                      <span className="block text-[10px] text-white/25 mt-0.5">Requiere PRO</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -254,8 +197,8 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Display */}
-        <div className="card p-6">
+        {/* ── Pantalla ────────────────────────────────────────── */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
           <h2 className="text-xs font-bold text-white/35 uppercase tracking-widest mb-5">Pantalla</h2>
           <label className="flex items-center justify-between cursor-pointer">
             <div>
@@ -264,8 +207,8 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => update('showOverlay', !settings.showOverlay)}
-              className={`w-11 h-6 rounded-full transition-all relative flex-shrink-0 ${
-                settings.showOverlay ? 'bg-indigo' : 'bg-white/10'
+              className={`w-11 h-6 rounded-full transition-all relative flex-shrink-0 ml-4 ${
+                settings.showOverlay ? 'bg-[#6366f1]' : 'bg-white/10'
               }`}
             >
               <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ${
@@ -275,57 +218,60 @@ export default function SettingsPage() {
           </label>
         </div>
 
-        {/* Voz del sistema */}
+        {/* ── Voz del sistema ─────────────────────────────────── */}
         {voices.length > 0 && (
-          <div className="card p-6">
+          <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
             <h2 className="text-xs font-bold text-white/35 uppercase tracking-widest mb-5">Voz del sistema</h2>
             <select
               value={settings.voiceName ?? ''}
               onChange={(e) => update('voiceName', e.target.value || null)}
-              className="input text-sm mb-4"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#6366f1]/50 mb-4"
             >
               <option value="">Automática (recomendado)</option>
               {voices.map(v => (
                 <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
               ))}
             </select>
-            <button onClick={testVoice} className="btn-ghost text-sm px-4">
+            <button onClick={testVoice}
+              className="border border-white/12 text-white/60 text-sm font-medium px-4 py-2 rounded-xl hover:border-white/25 hover:text-white transition-all">
               🔊 Probar voz
             </button>
           </div>
         )}
 
-        {/* Save */}
-        <button onClick={save} disabled={saving} className="btn-primary w-full h-11 text-sm">
+        {/* ── Guardar voz ─────────────────────────────────────── */}
+        <button onClick={save} disabled={saving}
+          className="w-full bg-[#6366f1] text-white font-bold h-11 rounded-xl text-sm hover:bg-[#5558e8] transition-all disabled:opacity-60">
           {saving ? 'Guardando...' : 'Guardar configuración'}
         </button>
-      </div>
 
-      {/* ── Cambiar contraseña ──────────────── */}
-      <div className="card p-6 mt-6">
-        <h2 className="font-bold text-sm mb-4">Cambiar contraseña</h2>
-        <form onSubmit={handlePasswordChange} className="space-y-3">
-          <input type="password" required
-            value={pwForm.currentPassword}
-            onChange={e => setPwForm(f => ({...f, currentPassword: e.target.value}))}
-            placeholder="Contraseña actual"
-            className="input w-full text-sm py-2" />
-          <input type="password" required minLength={8}
-            value={pwForm.newPassword}
-            onChange={e => setPwForm(f => ({...f, newPassword: e.target.value}))}
-            placeholder="Nueva contraseña (mín. 8 caracteres)"
-            className="input w-full text-sm py-2" />
-          <input type="password" required
-            value={pwForm.confirm}
-            onChange={e => setPwForm(f => ({...f, confirm: e.target.value}))}
-            placeholder="Repetir nueva contraseña"
-            className="input w-full text-sm py-2" />
-          {pwError && <p className="text-red-400 text-xs">{pwError}</p>}
-          <button type="submit" disabled={pwLoading}
-            className="btn-primary text-sm py-2.5 px-6 w-full sm:w-auto disabled:opacity-60">
-            {pwLoading ? 'Actualizando...' : 'Cambiar contraseña'}
-          </button>
-        </form>
+        {/* ── Cambiar contraseña ──────────────────────────────── */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
+          <h2 className="font-bold text-sm mb-4">Cambiar contraseña</h2>
+          <form onSubmit={handlePasswordChange} className="space-y-3">
+            <input type="password" required
+              value={pwForm.currentPassword}
+              onChange={e => setPwForm(f => ({...f, currentPassword: e.target.value}))}
+              placeholder="Contraseña actual"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#6366f1]/50" />
+            <input type="password" required minLength={8}
+              value={pwForm.newPassword}
+              onChange={e => setPwForm(f => ({...f, newPassword: e.target.value}))}
+              placeholder="Nueva contraseña (mín. 8 caracteres)"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#6366f1]/50" />
+            <input type="password" required
+              value={pwForm.confirm}
+              onChange={e => setPwForm(f => ({...f, confirm: e.target.value}))}
+              placeholder="Repetir nueva contraseña"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#6366f1]/50" />
+            {pwError && <p className="text-red-400 text-xs">{pwError}</p>}
+            <button type="submit" disabled={pwLoading}
+              className="w-full sm:w-auto bg-white/8 border border-white/12 text-white font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-white/12 transition-all disabled:opacity-60">
+              {pwLoading ? 'Actualizando...' : 'Cambiar contraseña'}
+            </button>
+          </form>
+        </div>
+
       </div>
     </div>
   )
