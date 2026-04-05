@@ -5,138 +5,112 @@ import crypto from 'crypto'
 
 export const referralsRouter = Router()
 
-const REFERRAL_BONUS_DAYS = 7  // días extra para ambos al convertir
+const REFERRAL_BONUS_DAYS = 7
 
 // ─── GET /api/referrals/my-link ───────────────────────────────────────────────
-// Devuelve el link de referido del usuario actual
-referralsRouter.get('/my-link', authenticate, async (req, res, next) => {
+referralsRouter.get('/my-link', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await prisma.user.findUnique({
-      where:  { id: req.user!.id },
-      select: { referralCode: true, name: true, email: true },
-    })
+    // Usar raw query para evitar problemas de tipos Prisma sin migration
+    const users = await prisma.$queryRaw<Array<{
+      id: string; referralCode: string|null; trialEndsAt: Date|null
+    }>>`
+      SELECT id, "referralCode", "trialEndsAt"
+      FROM "User" WHERE id = ${req.user!.id}
+    `
+    const user = users[0]
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' })
 
-    // Generar código si no tiene
-    if (!user?.referralCode) {
-      const code = crypto.randomBytes(4).toString('hex').toUpperCase()
-      await prisma.user.update({
-        where: { id: req.user!.id },
-        data:  { referralCode: code },
-      })
-      return res.json({
-        code,
-        link: `https://app.a3bhub.cloud/register?ref=${code}`,
-        bonusDays: REFERRAL_BONUS_DAYS,
-        referralsCount: 0,
-        daysEarned: 0,
-      })
+    let code = user.referralCode
+    if (!code) {
+      code = crypto.randomBytes(4).toString('hex').toUpperCase()
+      await prisma.$executeRaw`
+        UPDATE "User" SET "referralCode" = ${code} WHERE id = ${req.user!.id}
+      `
     }
 
-    // Contar referidos convertidos
-    const referrals = await prisma.user.findMany({
-      where:  { referredBy: user.referralCode },
-      select: { id: true, emailVerified: true, createdAt: true },
-    })
-    const converted = referrals.filter(r => r.emailVerified)
+    const referrals = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "User"
+      WHERE "referredBy" = ${code} AND "emailVerified" = true
+    `
 
     res.json({
-      code:           user.referralCode,
-      link:           `https://app.a3bhub.cloud/register?ref=${user.referralCode}`,
+      code,
+      link:           \`https://app.a3bhub.cloud/register?ref=\${code}\`,
       bonusDays:      REFERRAL_BONUS_DAYS,
-      referralsCount: converted.length,
-      daysEarned:     converted.length * REFERRAL_BONUS_DAYS,
+      referralsCount: referrals.length,
+      daysEarned:     referrals.length * REFERRAL_BONUS_DAYS,
     })
   } catch (err) { next(err) }
 })
 
 // ─── POST /api/referrals/apply ────────────────────────────────────────────────
-// Llamado en el registro cuando el usuario usa un ref=CODE
-// Activa el bonus para ambos (referidor y nuevo usuario)
-referralsRouter.post('/apply', authenticate, async (req, res, next) => {
+referralsRouter.post('/apply', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { referralCode } = req.body
-    if (!referralCode || typeof referralCode !== 'string') {
-      return res.status(400).json({ error: 'referralCode requerido' })
-    }
+    const { referralCode } = req.body as { referralCode?: string }
+    if (!referralCode) return res.status(400).json({ error: 'referralCode requerido' })
 
-    // Buscar al referidor
-    const referrer = await prisma.user.findFirst({
-      where:  { referralCode: referralCode.toUpperCase() },
-      select: { id: true, trialEndsAt: true, email: true, name: true },
-    })
+    const code = referralCode.toUpperCase()
 
-    if (!referrer) {
-      return res.status(404).json({ error: 'Código de referido inválido' })
-    }
-    if (referrer.id === req.user!.id) {
-      return res.status(400).json({ error: 'No puedes usar tu propio código' })
-    }
+    // Buscar referidor
+    const referrers = await prisma.$queryRaw<Array<{
+      id: string; trialEndsAt: Date|null
+    }>>`SELECT id, "trialEndsAt" FROM "User" WHERE "referralCode" = ${code}`
+    if (!referrers.length) return res.status(404).json({ error: 'Código inválido' })
+    const referrer = referrers[0]
+    if (referrer.id === req.user!.id) return res.status(400).json({ error: 'No puedes usar tu propio código' })
 
-    // Verificar que el nuevo usuario no haya sido ya referido
-    const newUser = await prisma.user.findUnique({
-      where:  { id: req.user!.id },
-      select: { referredBy: true, trialEndsAt: true },
-    })
-    if (newUser?.referredBy) {
-      return res.status(400).json({ error: 'Ya tienes un código aplicado' })
-    }
+    // Verificar que el usuario no haya sido ya referido
+    const me = await prisma.$queryRaw<Array<{
+      referredBy: string|null; trialEndsAt: Date|null
+    }>>`SELECT "referredBy", "trialEndsAt" FROM "User" WHERE id = ${req.user!.id}`
+    if (me[0]?.referredBy) return res.status(400).json({ error: 'Ya tienes un código aplicado' })
 
-    const now = new Date()
-    const MS_PER_DAY = 86_400_000
+    const now   = new Date()
+    const BONUS = REFERRAL_BONUS_DAYS * 86_400_000
+    const myEnd = new Date(Math.max(me[0]?.trialEndsAt?.getTime() ?? now.getTime(), now.getTime()) + BONUS)
+    const refEnd= new Date(Math.max(referrer.trialEndsAt?.getTime() ?? now.getTime(), now.getTime()) + BONUS)
 
-    // Extender trial del nuevo usuario +7 días
-    const newUserTrialEnd = new Date(
-      Math.max(newUser?.trialEndsAt?.getTime() ?? now.getTime(), now.getTime()) +
-      REFERRAL_BONUS_DAYS * MS_PER_DAY
-    )
-
-    // Extender trial del referidor +7 días
-    const referrerTrialEnd = new Date(
-      Math.max(referrer.trialEndsAt?.getTime() ?? now.getTime(), now.getTime()) +
-      REFERRAL_BONUS_DAYS * MS_PER_DAY
-    )
-
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: req.user!.id },
-        data:  { referredBy: referralCode.toUpperCase(), trialEndsAt: newUserTrialEnd },
-      }),
-      prisma.user.update({
-        where: { id: referrer.id },
-        data:  { trialEndsAt: referrerTrialEnd },
-      }),
+    await Promise.all([
+      prisma.$executeRaw`
+        UPDATE "User" SET "referredBy" = ${code}, "trialEndsAt" = ${myEnd}
+        WHERE id = ${req.user!.id}
+      `,
+      prisma.$executeRaw`
+        UPDATE "User" SET "trialEndsAt" = ${refEnd} WHERE id = ${referrer.id}
+      `,
     ])
 
     res.json({
       success:     true,
       bonusDays:   REFERRAL_BONUS_DAYS,
-      message:     `¡+${REFERRAL_BONUS_DAYS} días añadidos a tu trial! El usuario que te invitó también recibió ${REFERRAL_BONUS_DAYS} días.`,
-      newTrialEnd: newUserTrialEnd.toISOString(),
+      message:     \`¡+\${REFERRAL_BONUS_DAYS} días añadidos! El usuario que te invitó también recibió \${REFERRAL_BONUS_DAYS} días.\`,
+      newTrialEnd: myEnd.toISOString(),
     })
   } catch (err) { next(err) }
 })
 
 // ─── GET /api/referrals/stats ─────────────────────────────────────────────────
-referralsRouter.get('/stats', authenticate, async (req, res, next) => {
+referralsRouter.get('/stats', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await prisma.user.findUnique({
-      where:  { id: req.user!.id },
-      select: { referralCode: true, trialEndsAt: true },
-    })
+    const me = await prisma.$queryRaw<Array<{
+      referralCode: string|null; trialEndsAt: Date|null
+    }>>`SELECT "referralCode", "trialEndsAt" FROM "User" WHERE id = ${req.user!.id}`
 
-    if (!user?.referralCode) {
+    if (!me[0]?.referralCode) {
       return res.json({ referralsCount: 0, daysEarned: 0, bonusDays: REFERRAL_BONUS_DAYS })
     }
 
-    const count = await prisma.user.count({
-      where: { referredBy: user.referralCode, emailVerified: true },
-    })
+    const count = await prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*) as count FROM "User"
+      WHERE "referredBy" = ${me[0].referralCode} AND "emailVerified" = true
+    `
+    const n = Number(count[0]?.count ?? 0)
 
     res.json({
-      referralsCount: count,
-      daysEarned:     count * REFERRAL_BONUS_DAYS,
+      referralsCount: n,
+      daysEarned:     n * REFERRAL_BONUS_DAYS,
       bonusDays:      REFERRAL_BONUS_DAYS,
-      trialEndsAt:    user.trialEndsAt,
+      trialEndsAt:    me[0].trialEndsAt,
     })
   } catch (err) { next(err) }
 })
