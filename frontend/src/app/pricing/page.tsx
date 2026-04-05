@@ -200,6 +200,12 @@ export default function PricingPage() {
                 a:'Sí. El plan anual también incluye 36 días gratis sin tarjeta.' },
               { q:'¿Qué pasa después del trial?',
                 a:'Al terminar los 36 días necesitas activar PRO ($4.99/mes) para seguir usando la extensión.' },
+              { q:'¿Qué diferencia hay entre Google Translate y Llama?',
+                a:'Google Translate traduce frase por frase sin contexto. Llama 3.1 (plan PRO) recuerda las últimas 5 frases del video, extrae automáticamente el glosario técnico del curso y mantiene los mismos términos durante toda la sesión. Ideal para cursos de ML, programación y ciencias.' },
+              { q:'¿La IA funciona en tiempo real?',
+                a:'Sí. Llama 3.1 8B via Groq responde en ~200ms — el subtítulo aparece 5-8 segundos en pantalla, por lo que la narración empieza en el primer 3% del tiempo que está visible. El usuario no nota ningún retraso.' },
+              { q:'¿Qué es Llama 4 Scout del plan Team?',
+                a:'Llama 4 Scout 17B es el modelo más avanzado de Meta disponible en Groq. Para el plan Team ofrece mayor precisión en terminología muy especializada (fórmulas matemáticas complejas, código avanzado) con latencia de ~300ms.' },
             ].map((faq, i) => (
               <details key={i} className="bg-white/3 border border-white/8 rounded-xl overflow-hidden group">
                 <summary className="flex justify-between items-center px-4 sm:px-5 py-4 cursor-pointer list-none hover:bg-white/3 gap-3">
