@@ -5,7 +5,7 @@ import { prisma } from '../utils/prisma'
 export const aiRouter = Router()
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Groq API — Llama 3.1 8B / 3.2 1B (tier gratuito disponible)
+// Groq API — Llama 3.1 8B + Llama 4 Scout 17B (tier gratuito disponible)
 // Documentación: https://console.groq.com/docs/openai
 // La variable GROQ_API_KEY debe estar en el entorno del servidor.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -13,9 +13,9 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
 // Modelos disponibles en Groq (de más rápido a más preciso)
 const GROQ_MODELS = {
-  fast:    'llama-3.2-1b-preview',   // ~50-150ms — real-time subtítulos
-  quality: 'llama-3.1-8b-instant',   // ~200-400ms — mayor precisión
-  best:    'llama-3.3-70b-versatile', // ~500-800ms — máxima calidad (Team)
+  fast:    'llama-3.1-8b-instant',              // ~100-200ms — trial + PRO
+  quality: 'llama-3.1-8b-instant',              // ~100-200ms — PRO (mismo, excelente)
+  best:    'meta-llama/llama-4-scout-17b-16e-instruct', // ~200-400ms — Team (Llama 4!)
 }
 
 interface TranslateBody {
