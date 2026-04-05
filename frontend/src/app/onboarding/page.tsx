@@ -1,5 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+export const dynamic = 'force-dynamic'
+
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthStore } from '@/lib/auth-store'
@@ -13,7 +15,7 @@ const STEPS = [
   { id:'refer',     icon:'🎁', title:'Invita amigos' },
 ]
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const { user }     = useAuthStore()
@@ -203,5 +205,17 @@ export default function OnboardingPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#080810] flex items-center justify-center">
+        <div className="text-white/30 text-sm">Cargando...</div>
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   )
 }
