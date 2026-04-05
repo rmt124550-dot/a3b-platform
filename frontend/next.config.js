@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',          // Export estático — sin servidor Node
+  output: 'standalone',
   trailingSlash: false,
   images: {
-    unoptimized: true,       // Requerido para static export
+    unoptimized: true,
   },
+  // Permite importar desde node_modules en server components
+  serverExternalPackages: [],
 }
 
 module.exports = nextConfig
