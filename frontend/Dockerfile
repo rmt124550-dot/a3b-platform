@@ -1,22 +1,26 @@
-# ─── Stage 1: Build Next.js ─────────────────────────────────────────────────
-# AWS ECR Public mirror — sin rate limits de Docker Hub
+# ─── Stage 1: Build Next.js ──────────────────────────────────────────────────
 FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
-COPY package.json ./
-RUN npm install
+COPY package.json package-lock.json* ./
+RUN npm ci
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_API_URL=https://api.a3bhub.cloud
 RUN npm run build
 
-# ─── Stage 2: nginx static server ────────────────────────────────────────────
-FROM public.ecr.aws/docker/library/nginx:1.25-alpine
-# Copiar archivos estáticos compilados
-COPY --from=builder /app/out /usr/share/nginx/html
-# Copiar config nginx con SPA routing
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-# Verificar config antes de arrancar
-RUN nginx -t
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# ─── Stage 2: Next.js standalone runner ──────────────────────────────────────
+FROM public.ecr.aws/docker/library/node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Copiar el standalone output
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+EXPOSE 3000
+CMD ["node", "server.js"]
