@@ -1,193 +1,135 @@
 'use client'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth-store'
 import { useRouter } from 'next/navigation'
 
 interface Metrics {
-  users: { total: number; free: number; pro: number; team: number; emailVerified: number }
-  revenue?: { mrr: number; arr: number }
+  users: { total: number; pro: number; team: number; free: number; verified: number }
+  revenue: { mrr: number; arr: number }
+  ai?: { today: number; week: number; month: number; total: number; monthCostUsd: number; avgLatencyMs: number }
+  usage?: { totalHistory: number; totalDictionary: number }
 }
 
-interface User {
-  id: string; email: string; name: string | null; plan: string
-  role: string; emailVerified: boolean; createdAt: string
+function fmt(n: number, prefix='$') {
+  if (n >= 1000) return prefix + (n/1000).toFixed(1) + 'k'
+  return prefix + n.toFixed(2)
 }
 
 export default function AdminPage() {
-  const { user } = useAuthStore()
-  const router   = useRouter()
-  const [metrics,  setMetrics]  = useState<Metrics | null>(null)
-  const [users,    setUsers]    = useState<User[]>([])
-  const [search,   setSearch]   = useState('')
-  const [loading,  setLoading]  = useState(true)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const { user }  = useAuthStore()
+  const router    = useRouter()
+  const [m, setM] = useState<Metrics|null>(null)
+  const [ai, setAi] = useState<any>(null)
 
   useEffect(() => {
-    if (user?.role !== 'admin') { router.replace('/dashboard'); return }
-    Promise.all([
-      api.get('/api/admin/metrics').then(r => setMetrics(r.data)),
-      api.get('/api/admin/users?limit=100').then(r => setUsers(r.data.users ?? [])),
-    ]).finally(() => setLoading(false))
+    if (user && user.role !== 'admin') { router.replace('/dashboard'); return }
+    api.get('/api/admin/metrics').then(r => setM(r.data)).catch(() => {})
+    api.get('/api/admin/ai-metrics').then(r => setAi(r.data.ai)).catch(() => {})
   }, [user])
 
-  async function deleteUser(id: string, email: string) {
-    if (!confirm(`¿Eliminar usuario ${email}?`)) return
-    setDeleting(id)
-    try {
-      await api.delete(`/api/admin/users/${id}`)
-      setUsers(prev => prev.filter(u => u.id !== id))
-    } catch { alert('Error al eliminar') }
-    finally { setDeleting(null) }
-  }
+  if (!m) return <div className="p-8 text-white/30 text-sm">Cargando métricas...</div>
 
-  const filtered = users.filter(u =>
-    search === '' ||
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
-    (u.name ?? '').toLowerCase().includes(search.toLowerCase())
-  )
-
-  if (loading) return (
-    <div className="p-8 text-white/30 text-sm">Cargando panel admin...</div>
-  )
-
-  const u = metrics?.users
-  const MRR = u ? (u.pro * 4.99 + u.team * 19.99) : 0
-  const ARR = MRR * 12
+  const u = m.users; const rev = m.revenue
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-black">Panel Admin</h1>
-        <span className="text-xs bg-amber-500/10 border border-amber-500/20 text-amber-400 px-3 py-1 rounded-full font-bold">
-          👑 ADMIN
-        </span>
+    <div className="p-4 md:p-8 max-w-5xl space-y-5 sm:space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl sm:text-2xl font-black">Panel Admin</h1>
+        <span className="text-xs text-white/25">⬡ admin</span>
       </div>
 
-      {/* ── Métricas ─────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        {[
-          { label: 'Total usuarios', value: u?.total ?? 0,        color: 'text-white' },
-          { label: 'Plan PRO',       value: u?.pro ?? 0,          color: 'text-[#a5b4fc]' },
-          { label: 'Plan Team',      value: u?.team ?? 0,         color: 'text-violet-400' },
-          { label: 'MRR estimado',   value: `$${MRR.toFixed(0)}`, color: 'text-emerald-400' },
-        ].map(s => (
-          <div key={s.label} className="bg-white/3 border border-white/8 rounded-xl p-4">
-            <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
-            <div className="text-white/35 text-xs mt-0.5">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Métricas secundarias ─────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        {[
-          { label: 'Plan Free',         value: u?.free ?? 0,          color: 'text-white/60' },
-          { label: 'Emails verificados', value: u?.emailVerified ?? 0, color: 'text-emerald-400' },
-          { label: 'ARR estimado',       value: `$${ARR.toFixed(0)}`,  color: 'text-emerald-400' },
-          { label: 'Conversión Free→PRO',value: u?.total && u.total > 1
-              ? `${((u.pro + u.team) / u.total * 100).toFixed(1)}%`
-              : '—',                                                    color: 'text-amber-400' },
-        ].map(s => (
-          <div key={s.label} className="bg-white/3 border border-white/8 rounded-xl p-4">
-            <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
-            <div className="text-white/30 text-xs mt-0.5">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Acciones rápidas ─────────────────────── */}
-      <div className="grid sm:grid-cols-3 gap-3 mb-8">
-        <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer"
-          className="bg-white/3 border border-white/8 rounded-xl p-4 hover:border-white/15 transition-all">
-          <div className="text-2xl mb-2">💳</div>
-          <div className="font-semibold text-sm">Stripe Dashboard</div>
-          <div className="text-white/30 text-xs">Pagos y suscripciones</div>
-        </a>
-        <a href="https://app.resend.com" target="_blank" rel="noopener noreferrer"
-          className="bg-white/3 border border-white/8 rounded-xl p-4 hover:border-white/15 transition-all">
-          <div className="text-2xl mb-2">📧</div>
-          <div className="font-semibold text-sm">Resend</div>
-          <div className="text-white/30 text-xs">Emails enviados</div>
-        </a>
-        <Link href="/dashboard/affiliates"
-          className="bg-white/3 border border-white/8 rounded-xl p-4 hover:border-white/15 transition-all">
-          <div className="text-2xl mb-2">💰</div>
-          <div className="font-semibold text-sm">Afiliados</div>
-          <div className="text-white/30 text-xs">Comisiones y pagos</div>
-        </Link>
-      </div>
-
-      {/* ── Lista de usuarios ─────────────────────── */}
-      <div className="bg-white/3 border border-white/8 rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/6 flex items-center justify-between gap-4">
-          <h2 className="font-bold text-sm">Usuarios ({users.length})</h2>
-          <input
-            value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por email o nombre..."
-            className="bg-black/30 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white w-48 sm:w-64 focus:outline-none focus:border-[#6366f1]/50"
-          />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="border-b border-white/6">
-              <tr className="text-white/30 text-left">
-                <th className="px-4 py-3 font-normal">Email</th>
-                <th className="px-4 py-3 font-normal">Plan</th>
-                <th className="px-4 py-3 font-normal">Verificado</th>
-                <th className="px-4 py-3 font-normal">Creado</th>
-                <th className="px-4 py-3 font-normal">Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.slice(0, 50).map(u => (
-                <tr key={u.id} className="border-b border-white/4 hover:bg-white/2">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {u.role === 'admin' && <span className="text-amber-400">👑</span>}
-                      <div>
-                        <div className="text-white/80">{u.email}</div>
-                        {u.name && <div className="text-white/30">{u.name}</div>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] border ${
-                      u.plan === 'pro'  ? 'border-[#6366f1]/30 bg-[#6366f1]/10 text-[#a5b4fc]' :
-                      u.plan === 'team' ? 'border-violet-500/30 bg-violet-500/10 text-violet-300' :
-                      'border-white/10 bg-white/5 text-white/40'
-                    }`}>
-                      {u.plan.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.emailVerified ? '✅' : '❌'}
-                  </td>
-                  <td className="px-4 py-3 text-white/35">
-                    {new Date(u.createdAt).toLocaleDateString('es', { day:'numeric', month:'short', year:'2-digit' })}
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.role !== 'admin' && (
-                      <button
-                        onClick={() => deleteUser(u.id, u.email)}
-                        disabled={deleting === u.id}
-                        className="text-red-400/60 hover:text-red-400 text-[10px] disabled:opacity-40">
-                        {deleting === u.id ? '...' : 'Eliminar'}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length > 50 && (
-            <div className="px-4 py-3 text-white/25 text-xs">
-              Mostrando 50 de {filtered.length} usuarios
+      {/* ── Revenue ─────────────────────────────────────── */}
+      <section>
+        <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Revenue</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label:'MRR',  value: fmt(rev?.mrr ?? 0),  sub:'mensual recurrente', color:'text-emerald-400' },
+            { label:'ARR',  value: fmt(rev?.arr ?? 0),  sub:'anual proyectado',   color:'text-emerald-400' },
+            { label:'PRO',  value: u.pro,                sub:'suscriptores activos',color:'text-[#a5b4fc]' },
+            { label:'Team', value: u.team,               sub:'plan Team activo',   color:'text-violet-300' },
+          ].map(s => (
+            <div key={s.label} className="bg-white/3 border border-white/8 rounded-xl p-3 sm:p-4">
+              <div className={`text-xl sm:text-2xl font-black ${s.color}`}>{s.value}</div>
+              <div className="text-white/30 text-[10px] mt-0.5">{s.label}</div>
+              <div className="text-white/20 text-[10px]">{s.sub}</div>
             </div>
-          )}
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* ── Usuarios ────────────────────────────────────── */}
+      <section>
+        <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Usuarios</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label:'Total',     value: u.total },
+            { label:'Verificados',value: u.verified, sub:`${u.total ? ((u.verified/u.total)*100).toFixed(0) : 0}% del total` },
+            { label:'Free/Trial', value: u.free },
+            { label:'Conversión', value: u.total ? `${(((u.pro+u.team)/u.total)*100).toFixed(1)}%` : '0%' },
+          ].map(s => (
+            <div key={s.label} className="bg-white/3 border border-white/8 rounded-xl p-3 sm:p-4">
+              <div className="text-xl sm:text-2xl font-black">{s.value}</div>
+              <div className="text-white/30 text-[10px] mt-0.5">{s.label}</div>
+              {s.sub && <div className="text-white/20 text-[10px]">{s.sub}</div>}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── AI Metrics ──────────────────────────────────── */}
+      {ai && (
+        <section>
+          <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
+            IA — Groq Llama
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { label:'Hoy',       value: ai.today,            color:'text-white' },
+              { label:'Semana',    value: ai.week,             color:'text-white' },
+              { label:'Mes',       value: ai.month,            color:'text-[#a5b4fc]' },
+              { label:'Total AI',  value: ai.total,            color:'text-[#a5b4fc]' },
+              { label:'Costo mes', value:`$${ai.monthCostUsd}`,color:'text-emerald-400' },
+              { label:'Latencia',  value:`${ai.avgLatencyMs}ms`,color:'text-emerald-400' },
+            ].map(s => (
+              <div key={s.label} className="bg-[#6366f1]/5 border border-[#6366f1]/15 rounded-xl p-3">
+                <div className={`text-base sm:text-lg font-black ${s.color}`}>{s.value}</div>
+                <div className="text-white/30 text-[10px] mt-0.5">{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-white/20 text-xs mt-2">
+            * Tokens estimados: 98/traducción · Costo: $0.065/M tokens (Llama 3.1 8B)
+          </p>
+        </section>
+      )}
+
+      {/* ── Links rápidos ───────────────────────────────── */}
+      <section>
+        <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Acciones</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { href:'/admin/users',      label:'👥 Usuarios',    desc:'Gestionar cuentas' },
+            { href:'/admin/selectors',  label:'🔍 Selectores',  desc:'CSS por plataforma' },
+            { href:'/admin/affiliates', label:'💰 Afiliados',   desc:'Pagos y comisiones' },
+            { href:'https://dashboard.stripe.com', label:'💳 Stripe', desc:'Pagos y suscripciones', external:true },
+          ].map(item => (
+            item.external ? (
+              <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer"
+                className="bg-white/3 border border-white/8 rounded-xl p-3 sm:p-4 hover:border-white/15 transition-all">
+                <div className="font-bold text-sm">{item.label}</div>
+                <div className="text-white/30 text-xs mt-0.5">{item.desc}</div>
+              </a>
+            ) : (
+              <a key={item.href} href={item.href}
+                className="bg-white/3 border border-white/8 rounded-xl p-3 sm:p-4 hover:border-white/15 transition-all">
+                <div className="font-bold text-sm">{item.label}</div>
+                <div className="text-white/30 text-xs mt-0.5">{item.desc}</div>
+              </a>
+            )
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
