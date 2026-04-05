@@ -32,12 +32,14 @@ aiRouter.post('/translate', authenticate, async (req: Request, res: Response, ne
   try {
     const user = await prisma.user.findUnique({
       where:  { id: req.user!.id },
-      select: { plan: true, trialEndsAt: true, trialExpired: true },
+      select: { plan: true, trialEndsAt: true },
     })
 
     // Solo PRO y Team (trial también puede acceder con modo 'fast')
-    const isPro   = user?.plan === 'pro' || user?.plan === 'team'
-    const isTrial = !isPro && user?.trialEndsAt && new Date(user.trialEndsAt) > new Date() && !user?.trialExpired
+    const isPro      = user?.plan === 'pro' || user?.plan === 'team'
+    const trialEndsAt = user?.trialEndsAt ? new Date(user.trialEndsAt) : null
+    const trialActive = trialEndsAt ? trialEndsAt > new Date() : false
+    const isTrial    = !isPro && trialActive
 
     if (!isPro && !isTrial) {
       return res.status(403).json({ error: 'Se requiere plan PRO para usar traducción con IA' })
