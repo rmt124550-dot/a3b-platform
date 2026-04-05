@@ -20,10 +20,10 @@ const PLATFORMS = [
 ]
 
 const STEPS = [
-  { icon:'1', emoji:'👁', title:'Detecta', desc:'MutationObserver detecta subtitulos CC en tiempo real' },
-  { icon:'2', emoji:'🌐', title:'Traduce', desc:'Google Translate o DeepL segun tu plan' },
-  { icon:'3', emoji:'🔊', title:'Narra',   desc:'Web Speech API con voz del sistema operativo' },
-  { icon:'4', emoji:'💾', title:'Guarda',  desc:'Historial y diccionario personal (PRO)' },
+  { icon:'1', emoji:'👁', title:'Detecta',  desc:'MutationObserver detecta subtítulos CC al instante' },
+  { icon:'2', emoji:'🤖', title:'IA Traduce',desc:'Llama 3.1 con contexto del video y glosario técnico (PRO)' },
+  { icon:'3', emoji:'🔊', title:'Narra',    desc:'Web Speech API — 10 idiomas con voz natural del sistema' },
+  { icon:'4', emoji:'💾', title:'Guarda',   desc:'Historial + diccionario personal (PRO)' },
 ]
 
 const LANGS = [
@@ -91,7 +91,7 @@ export default function HomePage() {
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full
                         px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm text-white/60 mb-6 sm:mb-8">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-          v2.5.0 — 7 plataformas · 36 dias gratis
+          v2.5.0 — IA Llama 3.1 · 7 plataformas · 36 días gratis
         </div>
 
         {/* Heading */}
@@ -108,7 +108,7 @@ export default function HomePage() {
         {/* Descripcion */}
         <p className="text-sm sm:text-base md:text-xl text-white/45 max-w-xl md:max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2">
           Detecta subtitulos en ingles, los traduce y narra en voz alta.{' '}
-          <strong className="text-white/70">36 dias gratis — sin tarjeta.</strong>
+          <strong className="text-white/70">36 días gratis — sin tarjeta.</strong>
           <span className="hidden sm:inline">
             {' '}Funciona en Coursera, YouTube, Udemy, edX, LinkedIn, Khan Academy y DataCamp.
           </span>
@@ -251,6 +251,179 @@ export default function HomePage() {
                 <div className="text-[10px] sm:text-xs text-white/35 leading-relaxed">{s.desc}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* ── AI TRANSLATOR ───────────────────────────────── */}
+      <section className="py-14 sm:py-20 md:py-24 px-4 sm:px-6 border-t border-white/5">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10 sm:mb-14">
+            <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/20
+                            rounded-full px-3 sm:px-4 py-1 text-xs text-violet-300 font-bold
+                            tracking-widest uppercase mb-3 sm:mb-4">
+              <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+              POTENCIADO POR IA
+            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black mb-3 sm:mb-4">
+              Traducción con{' '}
+              <span className="text-transparent bg-clip-text"
+                    style={{backgroundImage:'linear-gradient(135deg,#8b5cf6,#6366f1)'}}>
+                Inteligencia Artificial
+              </span>
+            </h2>
+            <p className="text-white/40 text-sm sm:text-base max-w-xl mx-auto">
+              No es solo traducción. Es comprensión del contexto educativo.
+            </p>
+          </div>
+
+          {/* Comparativa Trial vs PRO */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10 sm:mb-14">
+            {/* Trial — Google */}
+            <div className="bg-white/3 border border-white/8 rounded-2xl p-5 sm:p-7">
+              <div className="flex items-center gap-3 mb-4 sm:mb-5">
+                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-xl bg-white/6 flex items-center justify-center text-lg sm:text-xl">
+                  🌐
+                </div>
+                <div>
+                  <div className="font-black text-sm sm:text-base">Google Translate</div>
+                  <div className="text-emerald-400 text-xs font-bold">Incluido en Trial</div>
+                </div>
+              </div>
+              <ul className="space-y-2 sm:space-y-2.5 text-sm text-white/50 mb-5">
+                {[
+                  ['✓','Traducción al instante, sin servidor'],
+                  ['✓','Español y 9 idiomas más'],
+                  ['✓','Sin API keys ni configuración'],
+                  ['–','Sin contexto del video anterior'],
+                  ['–','Sin glosario técnico del curso'],
+                  ['–','Puede variar el mismo término'],
+                ].map(([ic,txt]) => (
+                  <li key={txt} className={`flex gap-2 ${ic==='-'?'opacity-40':''}`}>
+                    <span className={ic==='✓'?'text-emerald-400 flex-shrink-0':'flex-shrink-0'}>{ic}</span>
+                    {txt}
+                  </li>
+                ))}
+              </ul>
+              <div className="bg-white/5 rounded-xl p-3 text-xs text-white/35 font-mono">
+                "backpropagation" → "retropropagación" (frase 1)<br/>
+                "backpropagation" → "propagación hacia atrás" (frase 8)
+              </div>
+            </div>
+
+            {/* PRO — Llama */}
+            <div className="bg-[#6366f1]/8 border border-[#6366f1]/40 rounded-2xl p-5 sm:p-7 relative">
+              <div className="absolute -top-3 left-4 bg-[#6366f1] text-white text-[10px] font-black px-3 py-1 rounded-full">
+                ⭐ PRO · Llama 3.1 8B
+              </div>
+              <div className="flex items-center gap-3 mb-4 sm:mb-5 mt-1">
+                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-xl bg-[#6366f1]/20 border border-[#6366f1]/30
+                                flex items-center justify-center text-lg sm:text-xl">
+                  🤖
+                </div>
+                <div>
+                  <div className="font-black text-sm sm:text-base">Llama 3.1 8B via Groq</div>
+                  <div className="text-[#a5b4fc] text-xs font-bold">Latencia ~200ms</div>
+                </div>
+              </div>
+              <ul className="space-y-2 sm:space-y-2.5 text-sm text-white/70 mb-5">
+                {[
+                  'Contexto de las últimas 5 frases del video',
+                  'Glosario técnico extraído automáticamente',
+                  'Mismo término siempre igual en toda la sesión',
+                  'Código Python/JS no se traduce nunca',
+                  'Fórmulas matemáticas legibles en voz alta',
+                  '10 idiomas con calidad nativa',
+                ].map(f => (
+                  <li key={f} className="flex gap-2">
+                    <span className="text-[#6366f1] flex-shrink-0">✓</span> {f}
+                  </li>
+                ))}
+              </ul>
+              <div className="bg-[#6366f1]/10 rounded-xl p-3 text-xs text-[#a5b4fc] font-mono">
+                "backpropagation" → "backpropagación" ✓<br/>
+                "backpropagation" → "backpropagación" ✓ (siempre)
+              </div>
+            </div>
+          </div>
+
+          {/* Demo traducción en vivo */}
+          <div className="bg-white/3 border border-white/8 rounded-2xl overflow-hidden">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/6 flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                <span className="text-xs text-white/40 font-medium">Traducción en tiempo real</span>
+              </div>
+              <span className="text-white/20 text-xs hidden sm:block">·</span>
+              <span className="text-xs text-white/30 hidden sm:block">Coursera — Machine Learning (Andrew Ng)</span>
+              <span className="ml-auto text-[10px] bg-[#6366f1]/20 text-[#a5b4fc] border border-[#6366f1]/30 px-2 py-0.5 rounded-full font-bold">
+                🤖 Llama 3.1
+              </span>
+            </div>
+            <div className="divide-y divide-white/5">
+              {[
+                {
+                  en: 'The gradient descent algorithm minimizes the cost function.',
+                  es: 'El algoritmo de descenso de gradiente minimiza la función de costo.',
+                  ms: 178, ctx: 0,
+                },
+                {
+                  en: 'This process is called backpropagation.',
+                  es: 'Este proceso se llama backpropagación.',
+                  ms: 165, ctx: 1,
+                },
+                {
+                  en: 'In TensorFlow, use model.compile and model.fit.',
+                  es: 'En TensorFlow, usa model.compile y model.fit.',
+                  ms: 152, ctx: 2, note: 'Código preservado',
+                },
+                {
+                  en: 'Backpropagation computes partial derivatives efficiently.',
+                  es: 'La backpropagación calcula derivadas parciales eficientemente.',
+                  ms: 170, ctx: 3, note: 'Consistencia del glosario',
+                },
+              ].map((row, i) => (
+                <div key={i} className="px-4 sm:px-6 py-3 sm:py-4">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white/30 text-xs mb-1 flex items-center gap-2">
+                        🎬 EN
+                        {row.ctx > 0 && (
+                          <span className="text-[9px] bg-violet-500/15 text-violet-400 border border-violet-500/20 px-1.5 rounded-full">
+                            +{row.ctx} contexto
+                          </span>
+                        )}
+                        {row.note && (
+                          <span className="text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-1.5 rounded-full">
+                            {row.note}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-white/50 text-xs sm:text-sm mb-2">{row.en}</div>
+                      <div className="text-white/25 text-xs mb-1">🤖 ES</div>
+                      <div className="text-white text-xs sm:text-sm font-medium">{row.es}</div>
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <div className="text-[#6366f1] font-bold text-xs">{row.ms}ms</div>
+                      <div className="text-white/20 text-[10px]">latencia</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="px-4 sm:px-6 py-3 bg-[#6366f1]/5 border-t border-[#6366f1]/15
+                            flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="text-xs text-white/35">
+                ⚡ Latencia media: <strong className="text-white/60">166ms</strong>
+                &nbsp;·&nbsp; 🪙 Costo de esta sesión: <strong className="text-white/60">$0.0004</strong>
+              </div>
+              <Link href="/register?plan=pro"
+                className="text-xs bg-[#6366f1] text-white font-bold px-4 py-2 rounded-lg
+                           hover:bg-[#5558e8] transition-all">
+                Probar con IA →
+              </Link>
+            </div>
           </div>
         </div>
       </section>
