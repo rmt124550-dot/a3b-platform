@@ -109,6 +109,77 @@ export default function DashboardPage() {
         ))}
       </div>
 
+
+      {/* ── Motor AI activo ──────────────────────────────── */}
+      <div className={`border rounded-xl p-4 mb-4 sm:mb-6 ${
+        isPro && user?.plan === 'team'
+          ? 'bg-violet-500/8 border-violet-500/25'
+          : isPro
+          ? 'bg-[#6366f1]/8 border-[#6366f1]/20'
+          : 'bg-white/3 border-white/8'
+      }`}>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${
+              isPro && user?.plan === 'team' ? 'bg-violet-500/15' :
+              isPro ? 'bg-[#6366f1]/15' : 'bg-white/6'
+            }`}>
+              {isPro && user?.plan === 'team' ? '🚀' : isPro ? '🤖' : '🌐'}
+            </div>
+            <div>
+              <div className="font-bold text-sm">
+                {isPro && user?.plan === 'team'
+                  ? 'Llama 4 Scout 17B'
+                  : isPro
+                  ? 'Llama 3.1 8B instant'
+                  : 'Google Translate'}
+              </div>
+              <div className={`text-xs ${
+                isPro ? 'text-violet-300' : 'text-white/35'
+              }`}>
+                {isPro && user?.plan === 'team'
+                  ? '🚀 Motor AI Team — máxima calidad'
+                  : isPro
+                  ? '🤖 Motor AI PRO — contexto + glosario técnico'
+                  : '🌐 Traducción rápida sin servidor'}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
+              isPro && user?.plan === 'team'
+                ? 'bg-violet-500/15 border-violet-500/30 text-violet-300'
+                : isPro
+                ? 'bg-[#6366f1]/15 border-[#6366f1]/30 text-[#a5b4fc]'
+                : 'bg-white/6 border-white/10 text-white/40'
+            }`}>
+              {isPro && user?.plan === 'team' ? '~300ms' : isPro ? '~200ms' : '~50ms'}
+            </span>
+            {!isPro && (
+              <Link href="/dashboard/billing"
+                className="text-xs bg-[#6366f1] text-white font-bold px-3 py-1.5 rounded-lg
+                           hover:bg-[#5558e8] transition-all whitespace-nowrap">
+                Activar IA →
+              </Link>
+            )}
+          </div>
+        </div>
+        {isPro && (
+          <div className="mt-3 pt-3 border-t border-white/6 grid grid-cols-3 gap-3 text-center">
+            {[
+              ['Contexto', '5 frases', 'últimas frases del video'],
+              ['Glosario', 'Auto', 'términos técnicos del curso'],
+              ['Latencia', isPro && user?.plan==='team' ? '~300ms' : '~200ms', 'por subtítulo'],
+            ].map(([label, val, desc]) => (
+              <div key={label as string}>
+                <div className="text-white/70 font-bold text-xs sm:text-sm">{val}</div>
+                <div className="text-white/25 text-[10px] mt-0.5">{label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* ── Plataformas ──────────────────────────────────────── */}
       <div className="bg-white/3 border border-white/8 rounded-2xl p-4 sm:p-5 mb-4 sm:mb-6">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
