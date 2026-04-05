@@ -14,6 +14,7 @@ import { billingRouter, webhookRouter } from './routes/billing'
 import { adminRouter }      from './routes/admin'
 import { selectorsRouter }   from './routes/selectors'
 import { affiliatesRouter }  from './routes/affiliates'
+import { aiRouter }          from './routes/ai'
 import { errorHandler }     from './middleware/errorHandler'
 import { notFound }         from './middleware/notFound'
 import { logger }           from './utils/logger'
@@ -164,6 +165,7 @@ app.use('/api/billing',    billingRouter)
 app.use('/api/admin',      adminRouter)
 app.use('/api/selectors',   selectorsRouter)
 app.use('/api/affiliates',  affiliatesRouter)
+app.use('/api/ai',          aiRouter)
 
 // ─── Seed de selectores en startup (garantiza requiredPlan actualizado) ────────
 import { seedSelectorsOnStartup } from './routes/selectors'
