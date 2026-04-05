@@ -26,7 +26,7 @@ const CATEGORIES = [
     title: 'Configuración de voz',
     desc: 'Ajusta la velocidad, idioma y voz del narrador',
     href: '/help/voice',
-    articles: ['Cambiar idioma', 'Ajustar velocidad', 'Elegir voz', 'Usar DeepL (PRO)'],
+    articles: ['Motor AI por plan', 'Cambiar idioma', 'Ajustar velocidad', 'Usar DeepL (PRO)'],
   },
   {
     icon: '💳',
@@ -74,7 +74,7 @@ const POPULAR_FAQS = [
   },
   {
     q: '¿Qué idiomas puedes traducir y narrar?',
-    a: 'Con el plan Free, la traducción es al español (ES). Con el plan PRO y DeepL, puedes elegir entre 10 idiomas: español, portugués, francés, alemán, italiano, japonés, coreano, chino, árabe y ruso.',
+    a: 'Trial usa Google Translate (rápido, sin servidor). PRO usa Llama 3.1 8B con contexto de las últimas 5 frases. Team usa Llama 4 Scout 17B, el modelo más avanzado de Meta. puedes elegir entre 10 idiomas: español, portugués, francés, alemán, italiano, japonés, coreano, chino, árabe y ruso.',
   },
   {
     q: '¿Funciona en Android?',
