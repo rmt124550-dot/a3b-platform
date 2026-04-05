@@ -2,69 +2,101 @@
 import Link from 'next/link'
 
 interface Props {
-  daysLeft: number | null
-  expired: boolean
-  plan: string
+  daysLeft:  number | null
+  expired:   boolean
+  plan:      string
 }
 
 export default function TrialBanner({ daysLeft, expired, plan }: Props) {
+  // No mostrar si ya es PRO o Team
   if (plan === 'pro' || plan === 'team') return null
 
-  if (expired) return (
-    <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-      <div className="flex items-start gap-2">
-        <span className="text-red-400 flex-shrink-0 mt-0.5">⏰</span>
-        <div>
-          <div className="text-red-300 font-bold text-sm">Tu período de prueba ha terminado</div>
-          <div className="text-red-300/60 text-xs mt-0.5">
-            Activa PRO para seguir usando A3B Narrator en todas las plataformas.
+  // No mostrar si no estamos en trial
+  if (daysLeft === null && !expired) return null
+
+  // Expirado
+  if (expired || (daysLeft !== null && daysLeft <= 0)) {
+    return (
+      <div className="bg-red-500/8 border border-red-500/25 rounded-xl p-3 sm:p-4
+                      flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-red-400 text-xl">🔒</span>
+          <div>
+            <div className="font-black text-sm text-red-300">Tu período de prueba ha terminado</div>
+            <div className="text-white/40 text-xs mt-0.5">
+              Activa PRO para recuperar el acceso completo a todas las plataformas.
+            </div>
           </div>
         </div>
-      </div>
-      <Link href="/dashboard/billing"
-        className="flex-shrink-0 bg-[#6366f1] text-white font-black px-5 py-2.5 rounded-xl hover:bg-[#5558e8] transition-all text-sm whitespace-nowrap">
-        🚀 Activar PRO — $4.99/mes
-      </Link>
-    </div>
-  )
-
-  if (daysLeft !== null && daysLeft <= 7) return (
-    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-      <div className="flex items-start gap-2">
-        <span className="text-amber-400 flex-shrink-0 mt-0.5">⚠️</span>
-        <div>
-          <div className="text-amber-200 font-bold text-sm">
-            {daysLeft === 0
-              ? 'Tu prueba termina hoy'
-              : `Tu prueba termina en ${daysLeft} día${daysLeft === 1 ? '' : 's'}`
-            }
-          </div>
-          <div className="text-amber-200/50 text-xs mt-0.5">
-            Activa PRO para no perder el acceso a YouTube, Udemy, edX y más.
-          </div>
+        <div className="flex gap-2 w-full sm:w-auto flex-shrink-0">
+          <Link href="/dashboard/billing"
+            className="flex-1 sm:flex-none bg-[#6366f1] text-white font-black
+                       px-4 py-2.5 rounded-xl hover:bg-[#5558e8] transition-all
+                       text-xs text-center whitespace-nowrap">
+            🚀 Activar PRO — $4.99/mes
+          </Link>
+          <Link href="/dashboard/billing"
+            className="border border-emerald-500/30 text-emerald-400 font-bold
+                       px-4 py-2.5 rounded-xl hover:bg-emerald-500/10 transition-all
+                       text-xs text-center whitespace-nowrap">
+            Anual -33%
+          </Link>
         </div>
       </div>
-      <Link href="/dashboard/billing"
-        className="flex-shrink-0 bg-amber-500 text-white font-black px-5 py-2.5 rounded-xl hover:bg-amber-400 transition-all text-sm whitespace-nowrap">
-        Mantener acceso →
-      </Link>
-    </div>
-  )
+    )
+  }
 
-  // Trial activo con más de 7 días — mostrar barra de progreso sutil
-  if (daysLeft !== null && daysLeft > 7) return (
-    <div className="bg-white/2 border border-white/6 rounded-xl px-4 py-2.5 flex items-center justify-between gap-4 mb-6">
-      <div className="flex items-center gap-2.5">
-        <span className="text-emerald-400 text-sm">🎁</span>
-        <span className="text-white/50 text-xs">
-          Prueba gratuita — <strong className="text-white/70">{daysLeft} días restantes</strong>
-        </span>
+  // Urgente (≤ 3 días)
+  if (daysLeft !== null && daysLeft <= 3) {
+    return (
+      <div className="bg-amber-500/8 border border-amber-500/30 rounded-xl p-3 sm:p-4
+                      flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-amber-400 text-xl">⏰</span>
+          <div>
+            <div className="font-black text-sm text-amber-300">
+              {daysLeft === 0 ? 'Tu trial termina hoy' : `${daysLeft} día${daysLeft === 1 ? '' : 's'} restantes`}
+            </div>
+            <div className="text-white/40 text-xs mt-0.5">
+              Activa PRO para no perder el acceso. 36 días de datos guardados.
+            </div>
+          </div>
+        </div>
+        <Link href="/dashboard/billing"
+          className="w-full sm:w-auto bg-amber-500 text-black font-black
+                     px-5 py-2.5 rounded-xl hover:bg-amber-400 transition-all
+                     text-xs text-center whitespace-nowrap">
+          Activar ahora →
+        </Link>
       </div>
-      <Link href="/pricing" className="text-[#a5b4fc] text-xs hover:underline flex-shrink-0">
-        Ver planes →
-      </Link>
-    </div>
-  )
+    )
+  }
 
+  // Aviso moderado (4-10 días)
+  if (daysLeft !== null && daysLeft <= 10) {
+    return (
+      <div className="bg-white/3 border border-white/8 rounded-xl p-3 sm:p-4
+                      flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-[#a5b4fc] text-xl">🎁</span>
+          <div className="text-sm">
+            <span className="text-white/60">
+              Te quedan <strong className="text-white/85">{daysLeft} días</strong> de trial gratis.
+            </span>
+            <Link href="/dashboard/referrals" className="ml-2 text-[#6366f1] hover:underline text-xs">
+              Invita amigos y gana +7 días →
+            </Link>
+          </div>
+        </div>
+        <Link href="/dashboard/billing"
+          className="flex-shrink-0 text-xs border border-[#6366f1]/30 text-[#a5b4fc]
+                     px-4 py-2 rounded-lg hover:bg-[#6366f1]/10 transition-all whitespace-nowrap">
+          Ver planes PRO
+        </Link>
+      </div>
+    )
+  }
+
+  // Trial OK — no mostrar nada (no molestar al usuario)
   return null
 }
