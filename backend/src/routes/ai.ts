@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express'
-import { authenticate } from '../middleware/auth'
-import { prisma } from '../lib/prisma'
+import { authenticate } from '../middleware/authenticate'
+import { prisma } from '../utils/prisma'
 
 export const aiRouter = Router()
 
