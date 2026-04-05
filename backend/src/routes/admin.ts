@@ -42,6 +42,33 @@ adminRouter.get('/ai-metrics', requireAdmin, async (_req, res, next) => {
   } catch (err) { next(err) }
 })
 
+
+// ─── GET /api/admin/ai-metrics ───────────────────────────────────────────────
+adminRouter.get('/ai-metrics', requireAdmin, async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const now   = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const week  = new Date(today.getTime() - 7 * 86_400_000)
+    const month = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    const [todayCount, weekCount, monthCount, totalCount] = await Promise.all([
+      prisma.usageLog.count({ where: { action: 'ai_translate', createdAt: { gte: today } } }),
+      prisma.usageLog.count({ where: { action: 'ai_translate', createdAt: { gte: week  } } }),
+      prisma.usageLog.count({ where: { action: 'ai_translate', createdAt: { gte: month } } }),
+      prisma.usageLog.count({ where: { action: 'ai_translate' } }),
+    ])
+
+    const AVG_TOKENS  = 98
+    const COST_PER_1M = 0.065
+    const monthTokens = monthCount * AVG_TOKENS
+    const monthCostUsd= Math.round((monthTokens / 1_000_000) * COST_PER_1M * 10000) / 10000
+
+    res.json({ ai: { today: todayCount, week: weekCount, month: monthCount,
+                     total: totalCount, monthTokens, monthCostUsd, avgLatencyMs: 200 } })
+  } catch (err) { next(err) }
+})
+
+
 export const adminRouter = Router()
 adminRouter.use(authenticate, requireAdmin)
 
