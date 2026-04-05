@@ -26,7 +26,6 @@ env:
   DOKPLOY_URL: http://163.176.155.185:3000
   API_URL: https://api.a3bhub.cloud
   GITLAB_REG: # REMOVED
-  GITLAB_USER: root
 
 jobs:
   # ── Detectar qué cambió ─────────────────────────────────────────────────────
