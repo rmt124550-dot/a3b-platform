@@ -171,6 +171,32 @@ app.use('/api/ai',          aiRouter)
 
 // ─── Seed de selectores en startup (garantiza requiredPlan actualizado) ────────
 import { seedSelectorsOnStartup } from './routes/selectors'
+
+// ─── Ensure admin user has correct role on startup ───────────────────────────
+async function ensureAdminRole() {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@a3bhub.cloud'
+    const updated    = await (await import('./utils/prisma')).prisma.user.updateMany({
+      where: { email: adminEmail, role: { not: 'admin' } },
+      data:  { role: 'admin', plan: 'team', emailVerified: true },
+    })
+    if (updated.count > 0) {
+      console.log(`[startup] Fixed admin role for ${adminEmail}`)
+    }
+    // Also invalidate any cached version
+    try {
+      const { redis } = await import('./utils/redis')
+      const admin = await (await import('./utils/prisma')).prisma.user.findFirst({
+        where: { email: adminEmail }, select: { id: true }
+      })
+      if (admin?.id) await redis.del(`user_cache:${admin.id}`)
+    } catch {}
+  } catch (err) {
+    console.warn('[startup] ensureAdminRole failed:', err)
+  }
+}
+ensureAdminRole()
+
 seedSelectorsOnStartup().catch((err: any) =>
   logger.warn({ event: 'SELECTORS_STARTUP_SEED_FAILED', error: err?.message })
 )
