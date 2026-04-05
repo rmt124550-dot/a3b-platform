@@ -280,54 +280,61 @@ export default function HomePage() {
 
           {/* Comparativa Trial vs PRO */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10 sm:mb-14">
-            {/* Trial — Google */}
-            <div className="bg-white/3 border border-white/8 rounded-2xl p-5 sm:p-7">
+
+            {/* Trial — Google — borde NEUTRO, no verde (verde = positivo en UX) */}
+            <div className="bg-white/2 border border-white/10 rounded-2xl p-5 sm:p-7">
               <div className="flex items-center gap-3 mb-4 sm:mb-5">
-                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-xl bg-white/6 flex items-center justify-center text-lg sm:text-xl">
+                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-xl bg-white/6
+                                flex items-center justify-center text-lg sm:text-xl">
                   🌐
                 </div>
                 <div>
-                  <div className="font-black text-sm sm:text-base">Google Translate</div>
-                  <div className="text-emerald-400 text-xs font-bold">Incluido en Trial</div>
+                  <div className="font-black text-sm sm:text-base text-white/80">Google Translate</div>
+                  <div className="text-white/40 text-xs font-semibold">🆓 Incluido en Trial</div>
                 </div>
               </div>
-              <ul className="space-y-2 sm:space-y-2.5 text-sm text-white/50 mb-5">
+              <ul className="space-y-2 sm:space-y-2.5 text-sm mb-5">
                 {[
-                  ['✓','Traducción al instante, sin servidor'],
-                  ['✓','Español y 9 idiomas más'],
-                  ['✓','Sin API keys ni configuración'],
-                  ['–','Sin contexto del video anterior'],
-                  ['–','Sin glosario técnico del curso'],
-                  ['–','Puede variar el mismo término'],
-                ].map(([ic,txt]) => (
-                  <li key={txt} className={`flex gap-2 ${ic==='-'?'opacity-40':''}`}>
-                    <span className={ic==='✓'?'text-emerald-400 flex-shrink-0':'flex-shrink-0'}>{ic}</span>
-                    {txt}
+                  { ok:true,  t:'Traducción al instante, sin servidor' },
+                  { ok:true,  t:'Español y 9 idiomas más' },
+                  { ok:true,  t:'Sin API keys ni configuración' },
+                  { ok:false, t:'Sin contexto del video anterior' },
+                  { ok:false, t:'Sin glosario técnico del curso' },
+                  { ok:false, t:'Puede variar el mismo término' },
+                ].map(({ok,t}) => (
+                  <li key={t} className="flex gap-2.5 items-start">
+                    <span className={`flex-shrink-0 text-sm font-bold mt-0.5 ${ok?'text-emerald-400':'text-white/20'}`}>
+                      {ok ? '✓' : '✗'}
+                    </span>
+                    <span className={ok?'text-white/60':'text-white/30'}>{t}</span>
                   </li>
                 ))}
               </ul>
-              <div className="bg-white/5 rounded-xl p-3 text-xs text-white/35 font-mono">
-                "backpropagation" → "retropropagación" (frase 1)<br/>
-                "backpropagation" → "propagación hacia atrás" (frase 8)
+              <div className="bg-white/4 border border-white/8 rounded-xl p-3 text-xs text-white/30 font-mono leading-relaxed">
+                <span className="text-red-400/60">✗</span> "backpropagation" → "retropropagación" (frase 1)<br/>
+                <span className="text-red-400/60">✗</span> "backpropagation" → "propagación hacia atrás" (frase 8)
               </div>
             </div>
 
-            {/* PRO — Llama */}
-            <div className="bg-[#6366f1]/8 border border-[#6366f1]/40 rounded-2xl p-5 sm:p-7 relative">
-              <div className="absolute -top-3 left-4 bg-[#6366f1] text-white text-[10px] font-black px-3 py-1 rounded-full">
+            {/* PRO — Llama — borde indigo prominente */}
+            <div className="bg-[#6366f1]/8 border border-[#6366f1]/50 rounded-2xl p-5 sm:p-7 relative
+                            shadow-lg shadow-[#6366f1]/10">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2
+                              bg-[#6366f1] text-white text-[10px] font-black
+                              px-4 py-1.5 rounded-full whitespace-nowrap">
                 ⭐ PRO · Llama 3.1 8B
               </div>
-              <div className="flex items-center gap-3 mb-4 sm:mb-5 mt-1">
+              <div className="flex items-center gap-3 mb-4 sm:mb-5 mt-2">
                 <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-xl bg-[#6366f1]/20 border border-[#6366f1]/30
                                 flex items-center justify-center text-lg sm:text-xl">
                   🤖
                 </div>
                 <div>
                   <div className="font-black text-sm sm:text-base">Llama 3.1 8B via Groq</div>
-                  <div className="text-[#a5b4fc] text-xs font-bold">Latencia ~200ms</div>
+                  <div className="text-[#a5b4fc] text-xs font-bold">⚡ Latencia ~200ms</div>
                 </div>
               </div>
-              <ul className="space-y-2 sm:space-y-2.5 text-sm text-white/70 mb-5">
+              <ul className="space-y-2 sm:space-y-2.5 text-sm mb-5">
                 {[
                   'Contexto de las últimas 5 frases del video',
                   'Glosario técnico extraído automáticamente',
@@ -336,14 +343,15 @@ export default function HomePage() {
                   'Fórmulas matemáticas legibles en voz alta',
                   '10 idiomas con calidad nativa',
                 ].map(f => (
-                  <li key={f} className="flex gap-2">
-                    <span className="text-[#6366f1] flex-shrink-0">✓</span> {f}
+                  <li key={f} className="flex gap-2.5 items-start">
+                    <span className="text-[#6366f1] flex-shrink-0 font-bold mt-0.5">✓</span>
+                    <span className="text-white/75">{f}</span>
                   </li>
                 ))}
               </ul>
-              <div className="bg-[#6366f1]/10 rounded-xl p-3 text-xs text-[#a5b4fc] font-mono">
-                "backpropagation" → "backpropagación" ✓<br/>
-                "backpropagation" → "backpropagación" ✓ (siempre)
+              <div className="bg-[#6366f1]/10 border border-[#6366f1]/20 rounded-xl p-3 text-xs text-[#a5b4fc] font-mono leading-relaxed">
+                <span className="text-emerald-400">✓</span> "backpropagation" → "backpropagación"<br/>
+                <span className="text-emerald-400">✓</span> "backpropagation" → "backpropagación" (siempre igual)
               </div>
             </div>
           </div>
@@ -366,46 +374,53 @@ export default function HomePage() {
                 {
                   en: 'The gradient descent algorithm minimizes the cost function.',
                   es: 'El algoritmo de descenso de gradiente minimiza la función de costo.',
-                  ms: 178, ctx: 0,
+                  ms: 178, ctx: 0, note: null, noteColor: null,
                 },
                 {
                   en: 'This process is called backpropagation.',
                   es: 'Este proceso se llama backpropagación.',
-                  ms: 165, ctx: 1,
+                  ms: 165, ctx: 1, note: null, noteColor: null,
                 },
                 {
                   en: 'In TensorFlow, use model.compile and model.fit.',
                   es: 'En TensorFlow, usa model.compile y model.fit.',
-                  ms: 152, ctx: 2, note: 'Código preservado',
+                  ms: 152, ctx: 2,
+                  note: '🟢 Código preservado',
+                  noteColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
                 },
                 {
                   en: 'Backpropagation computes partial derivatives efficiently.',
                   es: 'La backpropagación calcula derivadas parciales eficientemente.',
-                  ms: 170, ctx: 3, note: 'Consistencia del glosario',
+                  ms: 170, ctx: 3,
+                  note: '📌 Glosario consistente',
+                  noteColor: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
                 },
               ].map((row, i) => (
-                <div key={i} className="px-4 sm:px-6 py-3 sm:py-4">
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div key={i} className={`px-4 sm:px-6 py-3 sm:py-4 ${i < 3 ? 'border-b border-white/5' : ''}`}>
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="text-white/30 text-xs mb-1 flex items-center gap-2">
-                        🎬 EN
+                      {/* Badges EN */}
+                      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                        <span className="text-white/25 text-[10px] font-mono">EN</span>
                         {row.ctx > 0 && (
-                          <span className="text-[9px] bg-violet-500/15 text-violet-400 border border-violet-500/20 px-1.5 rounded-full">
+                          <span className="text-[9px] bg-violet-500/15 text-violet-400
+                                           border border-violet-500/25 px-1.5 py-0.5 rounded-full font-semibold">
                             +{row.ctx} contexto
                           </span>
                         )}
                         {row.note && (
-                          <span className="text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-1.5 rounded-full">
+                          <span className={`text-[9px] border px-1.5 py-0.5 rounded-full font-semibold ${row.noteColor}`}>
                             {row.note}
                           </span>
                         )}
                       </div>
-                      <div className="text-white/50 text-xs sm:text-sm mb-2">{row.en}</div>
-                      <div className="text-white/25 text-xs mb-1">🤖 ES</div>
-                      <div className="text-white text-xs sm:text-sm font-medium">{row.es}</div>
+                      <div className="text-white/45 text-xs sm:text-sm mb-2 leading-relaxed">{row.en}</div>
+                      <div className="text-white/25 text-[10px] font-mono mb-1">🤖 ES (Llama 3.1)</div>
+                      <div className="text-white/90 text-xs sm:text-sm font-semibold leading-relaxed">{row.es}</div>
                     </div>
-                    <div className="flex-shrink-0 text-right">
-                      <div className="text-[#6366f1] font-bold text-xs">{row.ms}ms</div>
+                    {/* Latencia */}
+                    <div className="flex-shrink-0 text-right ml-3">
+                      <div className="text-[#a5b4fc] font-black text-sm">{row.ms}ms</div>
                       <div className="text-white/20 text-[10px]">latencia</div>
                     </div>
                   </div>
