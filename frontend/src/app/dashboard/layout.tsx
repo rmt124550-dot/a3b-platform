@@ -17,6 +17,7 @@ const NAV_MAIN = [
 
 const NAV_SECONDARY = [
   { href: '/dashboard/dictionary', icon: '◉', label: 'Diccionario' },
+  { href: '/dashboard/referrals',  icon: '🎁', label: 'Referidos'  },
   { href: '/dashboard/affiliates', icon: '💰', label: 'Afiliados'  },
   { href: '/help',                 icon: '❓', label: 'Ayuda'       },
 ]
