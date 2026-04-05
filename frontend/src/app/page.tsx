@@ -27,11 +27,16 @@ const STEPS = [
 ]
 
 const LANGS = [
-  { flag:'🇪🇸', name:'Español' }, { flag:'🇧🇷', name:'Portugues' },
-  { flag:'🇫🇷', name:'Frances' }, { flag:'🇩🇪', name:'Aleman' },
-  { flag:'🇮🇹', name:'Italiano'}, { flag:'🇯🇵', name:'Japones' },
-  { flag:'🇰🇷', name:'Coreano' }, { flag:'🇨🇳', name:'Chino' },
-  { flag:'🇸🇦', name:'Arabe'   }, { flag:'🇷🇺', name:'Ruso' },
+  { code:'es', flag:'🇪🇸', name:'Español'   },
+  { code:'pt', flag:'🇧🇷', name:'Portugues'  },
+  { code:'fr', flag:'🇫🇷', name:'Frances'    },
+  { code:'de', flag:'🇩🇪', name:'Aleman'     },
+  { code:'it', flag:'🇮🇹', name:'Italiano'   },
+  { code:'ja', flag:'🇯🇵', name:'Japones'    },
+  { code:'ko', flag:'🇰🇷', name:'Coreano'    },
+  { code:'zh', flag:'🇨🇳', name:'Chino'      },
+  { code:'ar', flag:'🇸🇦', name:'Arabe'      },
+  { code:'ru', flag:'🇷🇺', name:'Ruso'       },
 ]
 
 const TESTIMONIALS = [
