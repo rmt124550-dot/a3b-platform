@@ -150,8 +150,6 @@ Idioma destino: ${langName}`
         userId:     req.user!.id,
         action:     'ai_translate',
         platform:   'api',
-        details:    { model: modelId, tokens, lang: targetLang },
-        tokensUsed: tokens,
       }
     }).catch(() => {}) // silencioso
 
